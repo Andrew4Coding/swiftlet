@@ -20,6 +20,7 @@ struct WalletCarousel: View {
                 }
                 .font(.subheadline)
             }
+            .padding(.horizontal, 20)
 
             ScrollView(.horizontal) {
                 HStack(spacing: 12) {
