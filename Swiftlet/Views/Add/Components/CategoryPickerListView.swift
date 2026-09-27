@@ -56,7 +56,8 @@ struct CategoryPickerListView: View {
                 }
             }
         }
-        .navigationTitle("Category")
+        .listStyle(.plain)
+        .navigationTitle("Select Category")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -76,20 +77,30 @@ struct CategoryPickerListView: View {
             selection = category
             dismiss()
         } label: {
-            HStack(spacing: 12) {
-                CategoryBadgeView(category: category, size: 36)
-                Text(category.name)
-                    .foregroundStyle(.primary)
+            HStack(spacing: 14) {
+                CategoryBadgeView(category: category, size: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(category.name)
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.primary)
+                    if let purpose = category.purpose {
+                        Text(purpose.displayName)
+                            .font(.caption)
+                            .foregroundStyle(Color(hex: purpose.colorHex))
+                    }
+                }
                 Spacer()
                 if selection?.persistentModelID == category.persistentModelID {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
-                        .font(.body.weight(.semibold))
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color(hex: category.resolvedColorHex))
+                        .font(.title3)
                 }
             }
+            .padding(.vertical, 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .listRowSeparator(.hidden)
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
                 onDelete(category)
@@ -119,8 +130,8 @@ struct CategoryPickerListView: View {
     NavigationStack {
         CategoryPickerListView(
             categories: [
-                TransactionCategory(name: "Food", iconType: .system, iconValue: "fork.knife", isDefault: true, isPinned: true),
-                TransactionCategory(name: "Transport", iconType: .system, iconValue: "car.fill", isDefault: true),
+                TransactionCategory(name: "Food", iconType: .emoji, iconValue: "🍜", isPinned: true, colorHex: "FF3B30"),
+                TransactionCategory(name: "Travel", iconType: .emoji, iconValue: "🧳", colorHex: "00C7BE"),
             ],
             selection: .constant(nil),
             onCreateNew: {},
