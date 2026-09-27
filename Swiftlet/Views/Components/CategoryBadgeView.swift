@@ -49,13 +49,11 @@ struct IconBadge: View {
                     Circle()
                         .strokeBorder(.white.opacity(0.35), lineWidth: max(1, size * 0.03))
                 )
-                .shadow(color: color.opacity(0.35), radius: size * 0.12, y: size * 0.06)
 
             switch iconType {
             case .emoji:
                 Text(iconValue)
                     .font(.system(size: size * 0.5))
-                    .shadow(color: .black.opacity(0.15), radius: 1, y: 1)
             case .system:
                 Image(systemName: iconValue)
                     .font(.system(size: size * 0.42, weight: .semibold))

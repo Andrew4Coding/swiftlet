@@ -18,7 +18,6 @@ struct WalletBadgeView: View {
                 .frame(width: size, height: size)
                 .background(.white, in: Circle())
                 .overlay(Circle().strokeBorder(Color(hex: wallet.colorHex).opacity(0.4), lineWidth: 1.5))
-                .shadow(color: Color(hex: wallet.colorHex).opacity(0.25), radius: size * 0.1, y: size * 0.05)
                 .accessibilityHidden(true)
         } else {
             IconBadge(
