@@ -11,6 +11,7 @@ enum AccountDataService {
     static func eraseAllData(in context: ModelContext, restoreDefaultCategories: Bool) throws {
         try deleteAll(Transaction.self, in: context)
         try deleteAll(TransactionCategory.self, in: context)
+        try deleteAll(Wallet.self, in: context)
         try context.save()
 
         if restoreDefaultCategories {
