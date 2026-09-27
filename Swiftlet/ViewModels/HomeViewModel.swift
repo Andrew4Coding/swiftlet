@@ -15,6 +15,20 @@ struct CategorySlice: Identifiable {
     var id: String {
         name
     }
+
+    var colorHex: String {
+        icon?.resolvedColorHex ?? "8E8E93"
+    }
+}
+
+struct PurposeSlice: Identifiable {
+    var purpose: CategoryPurpose?
+    var amount: Decimal
+    var fraction: Double
+
+    var id: String {
+        purpose?.rawValue ?? "unassigned"
+    }
 }
 
 @Observable
@@ -30,15 +44,44 @@ final class HomeViewModel {
     }
 
     func totalIncome(from transactions: [Transaction]) -> Decimal {
-        periodTransactions(from: transactions)
-            .filter { $0.type == .income }
-            .reduce(Decimal(0)) { $0 + $1.amount }
+        sum(of: .income, in: periodTransactions(from: transactions))
     }
 
     func totalExpense(from transactions: [Transaction]) -> Decimal {
-        periodTransactions(from: transactions)
-            .filter { $0.type == .expense }
-            .reduce(Decimal(0)) { $0 + $1.amount }
+        sum(of: .expense, in: periodTransactions(from: transactions))
+    }
+
+    /// Fractional change versus the previous equally long period, or `nil` when there is nothing
+    /// to compare against.
+    func change(of type: TransactionType, from transactions: [Transaction]) -> Double? {
+        guard let previousRange = DateRangeProvider.previousRange(for: selectedPeriod) else { return nil }
+        let previous = sum(of: type, in: transactions.filter { previousRange.contains($0.date) })
+        guard previous > 0 else { return nil }
+        let current = sum(of: type, in: periodTransactions(from: transactions))
+        return ((current - previous) as NSDecimalNumber).doubleValue / (previous as NSDecimalNumber).doubleValue
+    }
+
+    /// Spending split into Needs / Wants / Savings (plus unassigned) for the 50/30/20 card.
+    func purposeBreakdown(from transactions: [Transaction]) -> [PurposeSlice] {
+        let expenses = periodTransactions(from: transactions).filter { $0.type == .expense }
+        let total = expenses.reduce(Decimal(0)) { $0 + $1.amount }
+        guard total > 0 else { return [] }
+
+        let grouped = Dictionary(grouping: expenses) { $0.category?.purpose }
+        let order: [CategoryPurpose?] = CategoryPurpose.allCases + [nil]
+        return order.compactMap { purpose in
+            let amount = (grouped[purpose] ?? []).reduce(Decimal(0)) { $0 + $1.amount }
+            guard amount > 0 || purpose != nil else { return nil }
+            return PurposeSlice(
+                purpose: purpose,
+                amount: amount,
+                fraction: (amount as NSDecimalNumber).doubleValue / (total as NSDecimalNumber).doubleValue
+            )
+        }
+    }
+
+    private func sum(of type: TransactionType, in transactions: [Transaction]) -> Decimal {
+        transactions.filter { $0.type == type }.reduce(Decimal(0)) { $0 + $1.amount }
     }
 
     /// "Money left" — income minus expense for the currently selected period only.
