@@ -12,79 +12,12 @@ final class AddTransactionViewModel {
     var type: TransactionType = .expense
     var title: String = ""
     var amountText: String = ""
-    var source: MoneySource = .bca
+    var wallet: Wallet?
+    var destinationWallet: Wallet?
     var date: Date = .now
     var descriptionText: String = ""
     var selectedCategory: TransactionCategory?
     var receiptImageData: Data?
-
-    var isPresentingCustomCategoryEditor = false
-    var newCategoryName: String = ""
-    var newCategoryScope: CategoryScope = .expense
-
-    /// Symbol the user picked by hand in the editor. When set, it wins over every automatic
-    /// suggestion; `nil` means "let Apple Intelligence / the resolver choose".
-    var manuallyPickedSymbol: String?
-
-    /// Non-nil when the category editor sheet is editing an existing category rather than
-    /// creating a new one.
-    private(set) var editingCategory: TransactionCategory?
-
-    var isEditingCategory: Bool {
-        editingCategory != nil
-    }
-
-    /// Icon chosen by Apple Intelligence for the current name/description, when available.
-    var aiSuggestedSymbol: String?
-    var isSuggestingCategoryIcon = false
-    private var iconSuggestionTask: Task<Void, Never>?
-
-    /// Symbol the new/edited category will get — Apple Intelligence's pick when we have one,
-    /// otherwise the keyword-based resolver. Never chosen by hand.
-    var resolvedCategorySymbol: String {
-        manuallyPickedSymbol
-            ?? aiSuggestedSymbol
-            ?? CategorySymbolResolver.symbol(forName: newCategoryName, scope: newCategoryScope)
-    }
-
-    /// Whether the icon is currently being chosen automatically rather than by hand.
-    var isUsingAutomaticIcon: Bool {
-        manuallyPickedSymbol == nil
-    }
-
-    var isAppleIntelligenceIconAvailable: Bool {
-        CategoryIconIntelligence.isAvailable
-    }
-
-    /// Debounced request for an Apple Intelligence icon suggestion based on the current
-    /// name/description/scope. Safe to call on every keystroke.
-    @MainActor
-    func requestIconSuggestion() {
-        iconSuggestionTask?.cancel()
-
-        let name = newCategoryName.trimmingCharacters(in: .whitespaces)
-        let scope = newCategoryScope
-
-        guard manuallyPickedSymbol == nil, name.count >= 2, CategoryIconIntelligence.isAvailable else {
-            aiSuggestedSymbol = nil
-            isSuggestingCategoryIcon = false
-            return
-        }
-
-        iconSuggestionTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(500))
-            guard !Task.isCancelled else { return }
-
-            self?.isSuggestingCategoryIcon = true
-            let symbol = await CategoryIconIntelligence.suggestSymbol(
-                name: name,
-                scope: scope
-            )
-            guard !Task.isCancelled else { return }
-            self?.aiSuggestedSymbol = symbol
-            self?.isSuggestingCategoryIcon = false
-        }
-    }
 
     var errorMessage: String?
 
@@ -102,7 +35,8 @@ final class AddTransactionViewModel {
         type = transaction.type
         title = transaction.title
         amountText = NSDecimalNumber(decimal: transaction.amount).stringValue
-        source = transaction.source
+        wallet = transaction.wallet
+        destinationWallet = transaction.destinationWallet
         date = transaction.date
         descriptionText = transaction.transactionDescription
         selectedCategory = transaction.category
@@ -116,14 +50,56 @@ final class AddTransactionViewModel {
             .sorted { ($0.sortIndex, $0.name) < ($1.sortIndex, $1.name) }
     }
 
-    /// Clears a category and/or source that no longer applies after the type is switched.
+    /// Clears a category that no longer applies after the type is switched.
     func typeDidChange() {
-        if let selected = selectedCategory, !selected.appliesTo.allows(type) {
+        if type == .transfer {
+            selectedCategory = nil
+        } else if let selected = selectedCategory, !selected.appliesTo.allows(type) {
             selectedCategory = nil
         }
-        if !source.scope.allows(type) {
-            source = MoneySource.available(for: type).first ?? .bca
+    }
+
+    @MainActor
+    func assignDefaultWallets(context: ModelContext) {
+        if wallet == nil {
+            wallet = WalletMigrator.ensureDefaultWallet(context: context)
         }
+        if destinationWallet == nil {
+            destinationWallet = WalletMigrator.activeWallets(context: context)
+                .first { $0.persistentModelID != wallet?.persistentModelID }
+        }
+    }
+
+    private var resolvedTitle: String {
+        let trimmed = title.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        if type == .transfer {
+            return "Transfer to \(destinationWallet?.name ?? "wallet")"
+        }
+        return selectedCategory?.name ?? type.displayName
+    }
+
+    var validationMessage: String? {
+        if (parsedAmount ?? 0) <= 0 {
+            return "Enter an amount"
+        }
+        if wallet == nil {
+            return "Choose a wallet"
+        }
+        switch type {
+        case .transfer:
+            guard let destinationWallet else { return "Choose where the money goes" }
+            if destinationWallet.persistentModelID == wallet?.persistentModelID {
+                return "Pick two different wallets"
+            }
+        case .expense, .income:
+            if selectedCategory == nil {
+                return "Choose a category"
+            }
+        }
+        return nil
     }
 
     var parsedAmount: Decimal? {
@@ -131,107 +107,36 @@ final class AddTransactionViewModel {
     }
 
     var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespaces).isEmpty
-            && (parsedAmount ?? 0) > 0
-            && selectedCategory != nil
-    }
-
-    var isCustomCategoryValid: Bool {
-        !newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty
+        validationMessage == nil
     }
 
     @discardableResult
     func save(context: ModelContext) -> Bool {
-        guard let amount = parsedAmount, isValid else {
-            errorMessage = "Please fill in a title, a valid amount, and choose a category."
+        guard let amount = parsedAmount, validationMessage == nil else {
+            errorMessage = validationMessage
             return false
         }
 
+        let transaction: Transaction
         if let editingTransaction {
-            editingTransaction.type = type
-            editingTransaction.title = title.trimmingCharacters(in: .whitespaces)
-            editingTransaction.amount = amount
-            editingTransaction.source = source
-            editingTransaction.date = date
-            editingTransaction.transactionDescription = descriptionText.trimmingCharacters(in: .whitespaces)
-            editingTransaction.category = selectedCategory
-            editingTransaction.receiptImageData = receiptImageData
+            transaction = editingTransaction
         } else {
-            let transaction = Transaction(
-                type: type,
-                title: title.trimmingCharacters(in: .whitespaces),
-                amount: amount,
-                source: source,
-                date: date,
-                description: descriptionText.trimmingCharacters(in: .whitespaces),
-                category: selectedCategory,
-                receiptImageData: receiptImageData
-            )
+            transaction = Transaction(type: type, title: "", amount: amount, source: .bca, date: date, category: nil)
             context.insert(transaction)
         }
+
+        transaction.type = type
+        transaction.title = resolvedTitle
+        transaction.amount = amount
+        transaction.date = date
+        transaction.transactionDescription = descriptionText.trimmingCharacters(in: .whitespaces)
+        transaction.category = type == .transfer ? nil : selectedCategory
+        transaction.wallet = wallet
+        transaction.destinationWallet = type == .transfer ? destinationWallet : nil
+        transaction.receiptImageData = receiptImageData
+
         try? context.save()
         return true
-    }
-
-    /// Resets the editor fields and opens the sheet in "create" mode.
-    func beginCreatingCategory() {
-        editingCategory = nil
-        newCategoryName = ""
-        newCategoryScope = type == .income ? .income : .expense
-        manuallyPickedSymbol = nil
-        iconSuggestionTask?.cancel()
-        aiSuggestedSymbol = nil
-        isSuggestingCategoryIcon = false
-        isPresentingCustomCategoryEditor = true
-    }
-
-    /// Populates the editor fields from an existing category and opens the sheet in "edit" mode.
-    func beginEditingCategory(_ category: TransactionCategory) {
-        editingCategory = category
-        newCategoryName = category.name
-        newCategoryScope = category.appliesTo
-        manuallyPickedSymbol = category.iconValue
-        iconSuggestionTask?.cancel()
-        aiSuggestedSymbol = nil
-        isSuggestingCategoryIcon = false
-        isPresentingCustomCategoryEditor = true
-    }
-
-    @discardableResult
-    func saveCustomCategory(context: ModelContext) -> TransactionCategory? {
-        guard isCustomCategoryValid else { return nil }
-
-        let trimmedName = newCategoryName.trimmingCharacters(in: .whitespaces)
-        let symbolName = resolvedCategorySymbol
-
-        let category: TransactionCategory
-        if let editingCategory {
-            editingCategory.name = trimmedName
-            editingCategory.iconType = .system
-            editingCategory.iconValue = symbolName
-            editingCategory.appliesTo = newCategoryScope
-            category = editingCategory
-        } else {
-            let existing = (try? context.fetch(FetchDescriptor<TransactionCategory>())) ?? []
-            let nextIndex = (existing.map(\.sortIndex).max() ?? -1) + 1
-            let created = TransactionCategory(
-                name: trimmedName,
-                iconType: .system,
-                iconValue: symbolName,
-                appliesTo: newCategoryScope,
-                isDefault: false,
-                sortIndex: nextIndex
-            )
-            context.insert(created)
-            category = created
-        }
-
-        try? context.save()
-
-        selectedCategory = category
-        isPresentingCustomCategoryEditor = false
-
-        return category
     }
 
     /// Deletes a category. `Transaction.category` nullifies on delete, so existing

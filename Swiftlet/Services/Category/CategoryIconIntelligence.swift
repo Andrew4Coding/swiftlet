@@ -6,9 +6,9 @@
 import Foundation
 import FoundationModels
 
-/// Uses Apple Intelligence's on-device language model to pick the SF Symbol that best fits a
-/// category's name and description. Guided generation constrains the model to a curated symbol
-/// set, so it can never return an invalid symbol name. Falls back to `CategorySymbolResolver`
+/// Uses Apple Intelligence's on-device language model to pick the icon (emoji + colour) that
+/// best fits a category's name. Guided generation constrains the model to a curated set, so it
+/// can never return an invalid value. Falls back to `CategorySymbolResolver`
 /// (keyword matching) whenever the model is unavailable or errors.
 enum CategoryIconIntelligence {
     /// The closed set of icons the model is allowed to choose from. `@Generable` turns each
@@ -48,34 +48,65 @@ enum CategoryIconIntelligence {
             case .other: "tag.fill"
             }
         }
-    }
 
-    /// Curated SF Symbols offered in the manual icon picker.
-    static let iconOptions: [String] = {
-        var seen = Set<String>()
-        let extras = [
-            "creditcard.fill", "cart.fill", "fuelpump.fill", "tram.fill", "bicycle",
-            "wineglass.fill", "birthday.cake.fill", "graduationcap.fill", "stethoscope",
-            "hammer.fill", "wrench.and.screwdriver.fill", "wifi", "bolt.fill", "drop.fill",
-            "gift.fill", "star.fill", "leaf.fill", "pawprint.fill", "figure.2.and.child.holdinghands",
-            "dollarsign.circle.fill", "chart.pie.fill", "building.columns.fill", "shippingbox.fill",
-            "ticket.fill", "cup.and.saucer.fill", "bag.fill", "questionmark.circle.fill",
-        ]
-        return (Icon.allCases.map(\.symbolName) + extras).filter { seen.insert($0).inserted }
-    }()
+        var emoji: String {
+            switch self {
+            case .food: "🍜"
+            case .drink: "☕️"
+            case .groceries: "🛒"
+            case .transport: "🚗"
+            case .travel: "🧳"
+            case .shopping: "🛍️"
+            case .bills: "🧾"
+            case .phone: "📱"
+            case .entertainment: "🎮"
+            case .health: "💊"
+            case .fitness: "🏋️"
+            case .education: "🎓"
+            case .pet: "🐾"
+            case .home: "🏠"
+            case .family: "👨‍👩‍👧"
+            case .salary: "💰"
+            case .refund: "↩️"
+            case .gift: "🎁"
+            case .investment: "📈"
+            case .savings: "🐷"
+            case .work: "💼"
+            case .donation: "💝"
+            case .tax: "🏛️"
+            case .transfer: "🔁"
+            case .other: "🏷️"
+            }
+        }
+
+        var colorHex: String {
+            switch self {
+            case .food, .donation: "FF3B30"
+            case .drink, .shopping, .home: "FF9500"
+            case .groceries, .salary, .fitness: "34C759"
+            case .transport, .phone, .transfer: "0A84FF"
+            case .travel, .health: "00C7BE"
+            case .bills, .tax: "D4C41A"
+            case .entertainment, .education: "C644FC"
+            case .pet, .family, .gift: "FF2D78"
+            case .investment, .savings, .work, .refund: "3634E0"
+            case .other: "8E8E93"
+            }
+        }
+    }
 
     /// Whether the on-device model is ready to use right now.
     static var isAvailable: Bool {
         SystemLanguageModel.default.availability == .available
     }
 
-    /// Best-effort icon suggestion. Always returns a valid SF Symbol name — the keyword
-    /// resolver's result when Apple Intelligence can't be used.
-    static func suggestSymbol(
+    /// Best-effort icon suggestion — the keyword resolver's pick when Apple Intelligence can't
+    /// be used.
+    static func suggestIcon(
         name: String,
         scope: CategoryScope
-    ) async -> String {
-        let fallback = CategorySymbolResolver.symbol(forName: name, scope: scope)
+    ) async -> Icon {
+        let fallback = CategorySymbolResolver.icon(forName: name, scope: scope)
 
         guard SystemLanguageModel.default.availability == .available else { return fallback }
 
@@ -92,7 +123,7 @@ enum CategoryIconIntelligence {
 
         do {
             let response = try await session.respond(to: prompt, generating: Icon.self)
-            return response.content.symbolName
+            return response.content
         } catch {
             return fallback
         }

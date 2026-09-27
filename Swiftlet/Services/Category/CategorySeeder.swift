@@ -24,19 +24,44 @@ enum CategorySeeder {
         {
             let category = TransactionCategory(
                 name: definition.name,
-                iconType: .system,
-                iconValue: definition.symbolName,
+                iconType: .emoji,
+                iconValue: definition.icon.emoji,
                 appliesTo: definition.scope,
                 isDefault: true,
-                sortIndex: startIndex + offset
+                sortIndex: startIndex + offset,
+                colorHex: definition.icon.colorHex
             )
+            category.purpose = definition.purpose
             context.insert(category)
             didInsert = true
         }
 
-        if didInsert {
+        if didInsert || upgradeLegacyDefaults(context: context) {
             try? context.save()
         }
+    }
+
+    /// Default categories seeded before the emoji redesign still carry an SF Symbol and no
+    /// colour; swap them to their emoji look. Only untouched defaults are upgraded — a symbol
+    /// that no longer matches the original means the user customised it.
+    private static func upgradeLegacyDefaults(context: ModelContext) -> Bool {
+        guard let all = try? context.fetch(FetchDescriptor<TransactionCategory>()) else { return false }
+        let definitions = Dictionary(uniqueKeysWithValues: defaultDefinitions.map { ($0.name.lowercased(), $0) })
+
+        var didChange = false
+        for category in all where category.isDefault && category.iconType == .system && category.colorHex.isEmpty {
+            guard let definition = definitions[category.name.lowercased()],
+                  category.iconValue == definition.icon.symbolName || category.iconValue == definition.legacySymbol
+            else { continue }
+            category.iconType = .emoji
+            category.iconValue = definition.icon.emoji
+            category.colorHex = definition.icon.colorHex
+            if category.purpose == nil {
+                category.purpose = definition.purpose
+            }
+            didChange = true
+        }
+        return didChange
     }
 
     private static func mergeDuplicates(context: ModelContext) {
@@ -65,20 +90,23 @@ enum CategorySeeder {
 
     private struct Definition {
         let name: String
-        let symbolName: String
+        let icon: CategoryIconIntelligence.Icon
         let scope: CategoryScope
+        var purpose: CategoryPurpose?
+        var legacySymbol: String?
     }
 
     private static let defaultDefinitions: [Definition] = [
-        Definition(name: "Food", symbolName: "fork.knife", scope: .expense),
-        Definition(name: "Transport", symbolName: "car.fill", scope: .expense),
-        Definition(name: "Shopping", symbolName: "bag.fill", scope: .expense),
-        Definition(name: "Bills", symbolName: "doc.text.fill", scope: .expense),
-        Definition(name: "Entertainment", symbolName: "gamecontroller.fill", scope: .expense),
-        Definition(name: "Health", symbolName: "cross.case.fill", scope: .expense),
-        Definition(name: "Salary", symbolName: "banknote.fill", scope: .income),
-        Definition(name: "Reimburse", symbolName: "arrow.uturn.backward.circle.fill", scope: .income),
-        Definition(name: "Gift", symbolName: "gift.fill", scope: .income),
-        Definition(name: "Other", symbolName: "questionmark.circle.fill", scope: .both),
+        Definition(name: "Food", icon: .food, scope: .expense, purpose: .needs),
+        Definition(name: "Transport", icon: .transport, scope: .expense, purpose: .needs),
+        Definition(name: "Shopping", icon: .shopping, scope: .expense, purpose: .wants),
+        Definition(name: "Bills", icon: .bills, scope: .expense, purpose: .needs),
+        Definition(name: "Entertainment", icon: .entertainment, scope: .expense, purpose: .wants),
+        Definition(name: "Health", icon: .health, scope: .expense, purpose: .needs),
+        Definition(name: "Savings", icon: .savings, scope: .expense, purpose: .savings),
+        Definition(name: "Salary", icon: .salary, scope: .income),
+        Definition(name: "Reimburse", icon: .refund, scope: .income),
+        Definition(name: "Gift", icon: .gift, scope: .income),
+        Definition(name: "Other", icon: .other, scope: .both, legacySymbol: "questionmark.circle.fill"),
     ]
 }

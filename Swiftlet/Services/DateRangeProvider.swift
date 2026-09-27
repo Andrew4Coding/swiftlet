@@ -71,6 +71,22 @@ enum DateRangeProvider {
         }
     }
 
+    /// The equally long period immediately before `option`, for "vs last month"-style comparisons.
+    /// `nil` when the option has no natural predecessor.
+    static func previousRange(for option: PeriodOption, calendar: Calendar = .current) -> ClosedRange<Date>? {
+        let component: Calendar.Component
+        switch option {
+        case .today: component = .day
+        case .thisWeek: component = .weekOfYear
+        case .thisMonth: component = .month
+        case .all, .custom: return nil
+        }
+        guard let current = range(for: option, customRange: nil, calendar: calendar),
+              let start = calendar.date(byAdding: component, value: -1, to: current.lowerBound)
+        else { return nil }
+        return start ... current.lowerBound.addingTimeInterval(-1)
+    }
+
     /// Resolves a `StatsPeriod` to the date range whose transactions should be bucketed.
     static func range(for period: StatsPeriod, customRange: ClosedRange<Date>?, calendar: Calendar = .current) -> ClosedRange<Date> {
         let now = Date.now

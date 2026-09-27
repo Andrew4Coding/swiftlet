@@ -23,7 +23,7 @@ enum TransactionPDFRenderer {
         Column(title: "Date", fraction: 0.14, alignment: .left),
         Column(title: "Title", fraction: 0.26, alignment: .left),
         Column(title: "Category", fraction: 0.18, alignment: .left),
-        Column(title: "Source", fraction: 0.12, alignment: .left),
+        Column(title: "Wallet", fraction: 0.12, alignment: .left),
         Column(title: "Type", fraction: 0.12, alignment: .left),
         Column(title: "Amount", fraction: 0.18, alignment: .right),
     ]
@@ -72,13 +72,12 @@ enum TransactionPDFRenderer {
                 if y > pageSize.height - margin - rowHeight {
                     beginPage()
                 }
-                let signedAmount = (transaction.type == .income ? "+" : "-")
-                    + CurrencyFormatter.rupiah(transaction.amount)
+                let signedAmount = transaction.signedAmountText
                 drawRow([
                     rowDateFormatter.string(from: transaction.date),
                     transaction.title,
                     transaction.category?.name ?? "Uncategorized",
-                    transaction.source.displayName,
+                    transaction.walletDescription,
                     transaction.type.displayName,
                     signedAmount,
                 ], font: .systemFont(ofSize: 9), contentWidth: contentWidth, y: &y)

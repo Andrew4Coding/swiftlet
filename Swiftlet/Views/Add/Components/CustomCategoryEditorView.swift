@@ -7,143 +7,183 @@ import SwiftData
 import SwiftUI
 
 struct CustomCategoryEditorView: View {
-    @Bindable var viewModel: AddTransactionViewModel
+    @State private var viewModel: CategoryEditorViewModel
+    let onSaved: (TransactionCategory) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @FocusState private var isNameFocused: Bool
 
-    private let iconColumns = [GridItem(.adaptive(minimum: 44), spacing: 12)]
+    init(editing category: TransactionCategory? = nil, defaultScope: CategoryScope = .expense, onSaved: @escaping (TransactionCategory) -> Void = { _ in }) {
+        if let category {
+            _viewModel = State(initialValue: CategoryEditorViewModel(editing: category))
+        } else {
+            _viewModel = State(initialValue: CategoryEditorViewModel(defaultScope: defaultScope))
+        }
+        self.onSaved = onSaved
+    }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Details") {
-                    TextField("Name", text: $viewModel.newCategoryName)
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    if !viewModel.isEditing {
+                        intro
+                    }
 
-                Section {
-                    iconPreviewRow
-                    iconGrid
-                } header: {
-                    Text("Icon")
-                } footer: {
-                    if viewModel.isUsingAutomaticIcon, viewModel.isAppleIntelligenceIconAvailable {
-                        Text("Chosen automatically by Apple Intelligence from the name. Tap an icon to pick one yourself.")
-                    } else if viewModel.isUsingAutomaticIcon {
-                        Text("Chosen automatically from the name. Tap an icon to pick one yourself.")
+                    FormField(title: "Name") {
+                        TextField("e.g. Coffee runs, Groceries, Gym", text: $viewModel.name)
+                            .focused($isNameFocused)
+                            .submitLabel(.done)
+                            .fieldBox()
+                    }
+
+                    FormField(title: "Type of Category") {
+                        MenuField(
+                            placeholder: "Select category",
+                            selection: $viewModel.scope,
+                            options: CategoryScope.allCases,
+                            label: \.displayName
+                        )
+                    }
+
+                    if viewModel.allowsPurpose {
+                        FormField(title: "Purpose") {
+                            MenuField(
+                                placeholder: "Select purpose",
+                                selection: $viewModel.purpose,
+                                options: CategoryPurpose.allCases,
+                                label: \.displayName,
+                                allowsNone: true
+                            )
+                            Text(viewModel.purpose?.detail ?? "Groups spending into the 50/30/20 breakdown.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        FormField(title: "Monthly Budget") {
+                            HStack {
+                                Text("Rp").foregroundStyle(.secondary)
+                                TextField("No limit", text: $viewModel.budgetText)
+                                    .keyboardType(.numberPad)
+                            }
+                            .fieldBox()
+                        }
+                    }
+
+                    FormField(title: "Emoji") {
+                        emojiRow
+                    }
+
+                    FormField(title: "Colors") {
+                        ColorSwatchRow(selectionHex: Binding(
+                            get: { viewModel.colorHex },
+                            set: { viewModel.pickedColorHex = $0 }
+                        ))
                     }
                 }
-
-                Section("Applies to") {
-                    checkboxRow(title: "Expense", isOn: expenseEnabled) { setExpense($0) }
-                    checkboxRow(title: "Income", isOn: incomeEnabled) { setIncome($0) }
-                }
+                .padding(20)
             }
-            .onChange(of: viewModel.newCategoryName) { viewModel.requestIconSuggestion() }
-            .onChange(of: viewModel.newCategoryScope) { viewModel.requestIconSuggestion() }
-            .navigationTitle(viewModel.isEditingCategory ? "Edit Category" : "New Category")
+            .scrollDismissesKeyboard(.interactively)
+            .safeAreaInset(edge: .bottom) {
+                PrimaryActionButton(title: "Save", isEnabled: viewModel.isValid) {
+                    if let category = viewModel.save(context: modelContext) {
+                        onSaved(category)
+                        dismiss()
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
+            }
+            .onChange(of: viewModel.name) { viewModel.requestSuggestion() }
+            .onChange(of: viewModel.scope) { viewModel.requestSuggestion() }
+            .navigationTitle(viewModel.isEditing ? "Edit Category" : "Add Category")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel", systemImage: "xmark") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(viewModel.isEditingCategory ? "Save" : "Add") {
-                        viewModel.saveCustomCategory(context: modelContext)
-                        dismiss()
-                    }
-                    .disabled(!viewModel.isCustomCategoryValid)
+            }
+            .task {
+                if !viewModel.isEditing {
+                    isNameFocused = true
                 }
             }
         }
     }
 
-    private var iconPreviewRow: some View {
-        HStack(spacing: 12) {
-            Image(systemName: viewModel.resolvedCategorySymbol)
-                .font(.title3)
-                .foregroundStyle(AppTheme.categoryColor)
-                .frame(width: 32, height: 32)
-                .background(AppTheme.categoryColor.opacity(0.18), in: RoundedRectangle(cornerRadius: 8))
-
-            Text(viewModel.isUsingAutomaticIcon ? "Automatic" : "Custom")
+    private var intro: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Add a New Category")
+                .font(.title3.weight(.semibold))
+            Text("Swiftlet uses it to understand your spending habits and keep your budgets on track.")
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var emojiRow: some View {
+        HStack(spacing: 14) {
+            NavigationLink {
+                EmojiPickerView(
+                    selection: Binding(get: { viewModel.emoji }, set: { viewModel.pickedEmoji = $0 }),
+                    tintHex: viewModel.colorHex
+                )
+            } label: {
+                IconBadge(iconType: .emoji, iconValue: viewModel.emoji, colorHex: viewModel.colorHex, size: 56)
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "plus.circle.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.accentColor)
+                            .font(.system(size: 20))
+                            .offset(x: 4, y: 4)
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Choose emoji")
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(viewModel.name.isEmpty ? "Preview" : viewModel.name)
+                    .font(.body.weight(.semibold))
+                    .lineLimit(1)
+                Group {
+                    if viewModel.isSuggesting {
+                        Label("Picking an emoji…", systemImage: "sparkles")
+                    } else if viewModel.pickedEmoji == nil {
+                        Label("Chosen automatically from the name", systemImage: "sparkles")
+                    } else {
+                        Button("Use automatic emoji") {
+                            viewModel.pickedEmoji = nil
+                            viewModel.pickedColorHex = nil
+                            viewModel.requestSuggestion()
+                        }
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
             Spacer()
+        }
+    }
+}
 
-            if viewModel.isSuggestingCategoryIcon {
-                ProgressView()
-            } else if !viewModel.isUsingAutomaticIcon {
-                Button("Auto") {
-                    viewModel.manuallyPickedSymbol = nil
-                    viewModel.requestIconSuggestion()
-                }
-                .font(.footnote.weight(.semibold))
-            }
+#Preview {
+    CustomCategoryEditorView()
+        .modelContainer(for: [Transaction.self, TransactionCategory.self], inMemory: true)
+}
+
+enum CategoryEditorTarget: Identifiable {
+    case new
+    case edit(TransactionCategory)
+
+    var id: String {
+        switch self {
+        case .new: "new"
+        case let .edit(category): "\(category.persistentModelID.hashValue)"
         }
     }
 
-    private var iconGrid: some View {
-        LazyVGrid(columns: iconColumns, spacing: 12) {
-            ForEach(CategoryIconIntelligence.iconOptions, id: \.self) { symbol in
-                let isSelected = !viewModel.isUsingAutomaticIcon && viewModel.resolvedCategorySymbol == symbol
-                Button {
-                    viewModel.manuallyPickedSymbol = symbol
-                } label: {
-                    Image(systemName: symbol)
-                        .font(.body)
-                        .foregroundStyle(isSelected ? Color.white : AppTheme.categoryColor)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            isSelected ? AppTheme.categoryColor : AppTheme.categoryColor.opacity(0.14),
-                            in: RoundedRectangle(cornerRadius: 10)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private var expenseEnabled: Bool {
-        viewModel.newCategoryScope == .expense || viewModel.newCategoryScope == .both
-    }
-
-    private var incomeEnabled: Bool {
-        viewModel.newCategoryScope == .income || viewModel.newCategoryScope == .both
-    }
-
-    private func setExpense(_ isOn: Bool) {
-        updateScope(expense: isOn, income: incomeEnabled)
-    }
-
-    private func setIncome(_ isOn: Bool) {
-        updateScope(expense: expenseEnabled, income: isOn)
-    }
-
-    /// Keeps at least one scope checked — unchecking the last one is a no-op rather than
-    /// leaving the category applicable to nothing.
-    private func updateScope(expense: Bool, income: Bool) {
-        switch (expense, income) {
-        case (true, true): viewModel.newCategoryScope = .both
-        case (true, false): viewModel.newCategoryScope = .expense
-        case (false, true): viewModel.newCategoryScope = .income
-        case (false, false): break
-        }
-    }
-
-    private func checkboxRow(title: String, isOn: Bool, action: @escaping (Bool) -> Void) -> some View {
-        Button {
-            action(!isOn)
-        } label: {
-            HStack {
-                Text(title)
-                    .foregroundStyle(.primary)
-                Spacer()
-                Image(systemName: isOn ? "checkmark.square.fill" : "square")
-                    .foregroundStyle(isOn ? Color.accentColor : .secondary)
-                    .font(.title3)
-            }
-        }
-        .buttonStyle(.plain)
+    var category: TransactionCategory? {
+        if case let .edit(category) = self { category } else { nil }
     }
 }

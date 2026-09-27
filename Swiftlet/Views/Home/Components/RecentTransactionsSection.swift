@@ -15,7 +15,7 @@ struct RecentTransactionsSection: View {
                 .font(.headline)
 
             if transactions.isEmpty {
-                Text("No transactions yet — tap + to add one.")
+                Text("No transactions yet. Tap + to add one.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -36,5 +36,6 @@ struct RecentTransactionsSection: View {
                 }
             }
         }
+        .card()
     }
 }

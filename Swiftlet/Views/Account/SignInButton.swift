@@ -13,6 +13,10 @@ struct SignInButton: View {
     @Environment(AuthenticationService.self) private var authService
     @Environment(\.colorScheme) private var colorScheme
 
+    /// Overrides the colour-scheme-based style, e.g. white on the sky-blue sign-in screen.
+    var style: SignInWithAppleButton.Style?
+    var cornerRadius: CGFloat = 16
+
     var body: some View {
         SignInWithAppleButton(.signIn) { request in
             request.requestedScopes = [.fullName, .email]
@@ -24,8 +28,8 @@ struct SignInButton: View {
                 print("Sign in with Apple failed: \(error.localizedDescription)")
             }
         }
-        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-        .frame(height: 48)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .signInWithAppleButtonStyle(style ?? (colorScheme == .dark ? .white : .black))
+        .frame(height: 50)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }

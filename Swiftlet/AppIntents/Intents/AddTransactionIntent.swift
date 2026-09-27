@@ -27,7 +27,8 @@ struct AddTransactionIntent: AppIntent {
             throw $rawPhrase.needsValueError("How much did you spend, and what for?")
         }
 
-        let type = TransactionType(rawValue: parsed.type) ?? .expense
+        let parsedType = TransactionType(rawValue: parsed.type) ?? .expense
+        let type: TransactionType = parsedType == .transfer ? .expense : parsedType
         let money = Decimal(parsed.amount)
         let title = [parsed.name, parsed.note]
             .first { !$0.trimmingCharacters(in: .whitespaces).isEmpty }?
@@ -55,6 +56,7 @@ struct AddTransactionIntent: AppIntent {
             description: parsed.note,
             category: category
         )
+        tx.wallet = WalletMigrator.ensureDefaultWallet(context: context)
         context.insert(tx)
         try context.save()
 

@@ -8,6 +8,7 @@ import SwiftData
 
 enum CategoryIconType: String, Codable {
     case system
+    case emoji
 }
 
 enum CategoryScope: String, Codable, CaseIterable, Identifiable {
@@ -36,6 +37,49 @@ enum CategoryScope: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+/// 50/30/20-style bucket a spending category counts toward.
+enum CategoryPurpose: String, Codable, CaseIterable, Identifiable {
+    case needs
+    case wants
+    case savings
+
+    var id: String {
+        rawValue
+    }
+
+    var displayName: String {
+        switch self {
+        case .needs: "Needs"
+        case .wants: "Wants"
+        case .savings: "Savings"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .needs: "Essentials like rent, bills, groceries"
+        case .wants: "Lifestyle like dining out, hobbies"
+        case .savings: "Emergency fund, investments, debt"
+        }
+    }
+
+    var targetShare: Double {
+        switch self {
+        case .needs: 0.5
+        case .wants: 0.3
+        case .savings: 0.2
+        }
+    }
+
+    var colorHex: String {
+        switch self {
+        case .needs: "0A84FF"
+        case .wants: "FF9500"
+        case .savings: "34C759"
+        }
+    }
+}
+
 /// Named `TransactionCategory` (not `Category`) to avoid colliding with `ObjectiveC.Category`,
 /// a typealias to `OpaquePointer` auto-imported via Foundation — using `Category` here silently
 @Model
@@ -48,13 +92,34 @@ final class TransactionCategory {
     var isPinned: Bool = false
     var sortIndex: Int = 0
     var createdAt: Date = Date.now
+    var colorHex: String = ""
+    var purposeRaw: String = ""
+    /// Monthly spending limit; zero means no budget.
+    var monthlyBudget: Decimal = 0
 
     @Relationship(deleteRule: .nullify, inverse: \Transaction.category)
     var transactions: [Transaction]? = []
 
+    var recurringTransactions: [RecurringTransaction]? = []
+
     var iconType: CategoryIconType {
         get { CategoryIconType(rawValue: iconTypeRaw) ?? .system }
         set { iconTypeRaw = newValue.rawValue }
+    }
+
+    var hasBudget: Bool {
+        monthlyBudget > 0
+    }
+
+    var purpose: CategoryPurpose? {
+        get { CategoryPurpose(rawValue: purposeRaw) }
+        set { purposeRaw = newValue?.rawValue ?? "" }
+    }
+
+    /// Legacy rows created before per-category colours have an empty `colorHex`; they fall back
+    /// to a stable palette slot so they don't all render in the same colour.
+    var resolvedColorHex: String {
+        colorHex.isEmpty ? AppTheme.paletteHex(at: sortIndex) : colorHex
     }
 
     var appliesTo: CategoryScope {
@@ -70,6 +135,7 @@ final class TransactionCategory {
         isDefault: Bool = false,
         isPinned: Bool = false,
         sortIndex: Int = 0,
+        colorHex: String = "",
         createdAt: Date = .now
     ) {
         self.name = name
@@ -79,6 +145,7 @@ final class TransactionCategory {
         self.isDefault = isDefault
         self.isPinned = isPinned
         self.sortIndex = sortIndex
+        self.colorHex = colorHex
         self.createdAt = createdAt
     }
 

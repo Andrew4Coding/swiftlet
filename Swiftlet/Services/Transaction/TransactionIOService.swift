@@ -17,6 +17,8 @@ enum TransactionIOService {
         var date: Date
         var description: String
         var category: String?
+        var wallet: String?
+        var destinationWallet: String?
     }
 
     private static let isoFormatter: ISO8601DateFormatter = {
@@ -34,7 +36,9 @@ enum TransactionIOService {
                 source: transaction.source.rawValue,
                 date: transaction.date,
                 description: transaction.transactionDescription,
-                category: transaction.category?.name
+                category: transaction.category?.name,
+                wallet: transaction.wallet?.name,
+                destinationWallet: transaction.destinationWallet?.name
             )
         }
 
@@ -84,7 +88,6 @@ enum TransactionIOService {
         for record in records {
             guard
                 let type = TransactionType(rawValue: record.type),
-                let source = MoneySource(rawValue: record.source),
                 let amount = Decimal(string: record.amount)
             else {
                 skipped += 1
@@ -96,7 +99,6 @@ enum TransactionIOService {
                 guard transaction.amount == amount else { return false }
                 guard transaction.date == record.date else { return false }
                 guard transaction.type == type else { return false }
-                guard transaction.source == source else { return false }
                 return transaction.transactionDescription == record.description
             }
             if isDuplicate {
@@ -104,22 +106,32 @@ enum TransactionIOService {
                 continue
             }
 
-            let category = resolveCategory(named: record.category, in: context)
+            let wallet = resolveWallet(named: record.wallet, in: context)
+            let destination = type == .transfer
+                ? resolveWallet(named: record.destinationWallet, in: context)
+                : nil
+            if type == .transfer, destination == nil {
+                skipped += 1
+                continue
+            }
 
             let transaction = Transaction(
                 type: type,
                 title: record.title,
                 amount: amount,
-                source: source,
+                source: MoneySource(rawValue: record.source) ?? .bca,
                 date: record.date,
                 description: record.description,
-                category: category
+                category: type == .transfer ? nil : resolveCategory(named: record.category, in: context)
             )
+            transaction.wallet = wallet
+            transaction.destinationWallet = destination
             context.insert(transaction)
             imported += 1
         }
 
         try context.save()
+        WalletMigrator.run(context: context)
         return ImportResult(imported: imported, skipped: skipped)
     }
 
@@ -134,9 +146,23 @@ enum TransactionIOService {
         return created
     }
 
+    @MainActor
+    /// Old exports have no wallet column; those rows get no wallet here so `WalletMigrator`
+    /// links them from the legacy source like any other pre-wallet transaction.
+    private static func resolveWallet(named name: String?, in context: ModelContext) -> Wallet? {
+        guard let name, !name.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        let wallets = (try? context.fetch(FetchDescriptor<Wallet>())) ?? []
+        if let match = wallets.first(where: { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }) {
+            return match
+        }
+        let created = Wallet(name: name, sortIndex: (wallets.map(\.sortIndex).max() ?? -1) + 1)
+        context.insert(created)
+        return created
+    }
+
     // MARK: - CSV
 
-    private static let csvHeader = ["type", "title", "amount", "source", "date", "description", "category"]
+    private static let csvHeader = ["type", "title", "amount", "source", "date", "description", "category", "wallet", "destinationWallet"]
 
     private static func encodeCSV(_ records: [Record]) -> Data {
         var lines = [csvHeader.joined(separator: ",")]
@@ -149,6 +175,8 @@ enum TransactionIOService {
                 isoFormatter.string(from: record.date),
                 record.description,
                 record.category ?? "",
+                record.wallet ?? "",
+                record.destinationWallet ?? "",
             ]
             lines.append(fields.map { escapeCSVField($0) }.joined(separator: ","))
         }

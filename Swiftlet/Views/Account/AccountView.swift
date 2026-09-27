@@ -33,10 +33,31 @@ struct AccountView: View {
                 }
 
                 if authService.state != .signedOut {
+                    moneySection
                     dataManagementSection
                 }
             }
             .navigationTitle("Account")
+        }
+    }
+
+    private var moneySection: some View {
+        Section("Money") {
+            NavigationLink {
+                WalletsView()
+            } label: {
+                Label("Wallets", systemImage: "wallet.bifold.fill")
+            }
+            NavigationLink {
+                BudgetsView()
+            } label: {
+                Label("Budgets", systemImage: "target")
+            }
+            NavigationLink {
+                RecurringListView()
+            } label: {
+                Label("Recurring & Subscriptions", systemImage: "repeat")
+            }
         }
     }
 

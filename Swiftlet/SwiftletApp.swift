@@ -35,15 +35,24 @@ struct SwiftletApp: App {
             }
             .task {
                 consumePendingReceipt()
+                await refreshBackgroundWork()
                 TodaySpendingSnapshotWriter.rebuild(using: container.mainContext)
             }
             .onChange(of: scenePhase) { _, phase in
-                if phase != .active {
+                if phase == .active {
+                    Task { await refreshBackgroundWork() }
+                } else {
                     TodaySpendingSnapshotWriter.rebuild(using: container.mainContext)
                 }
             }
         }
         .modelContainer(container)
+    }
+
+    private func refreshBackgroundWork() async {
+        WalletMigrator.run(context: container.mainContext)
+        RecurringScheduler.materializeDue(context: container.mainContext)
+        await RecurringReminderScheduler.reschedule(context: container.mainContext)
     }
 
     private func consumePendingReceipt() {

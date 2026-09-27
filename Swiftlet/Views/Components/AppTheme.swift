@@ -6,12 +6,66 @@
 import SwiftUI
 
 enum AppTheme {
-    /// The single accent colour used app-wide, replacing the previous orange tint.
     static let accent = Color(hex: "0A84FF")
 
-    /// Every category renders in this one colour — categories are distinguished by their
-    /// symbol and name, not by per-category colours.
-    static let categoryColor = Color(hex: "0A84FF")
+    static let income = Color(hex: "34C759")
+    static let expense = Color(hex: "FF3B30")
+
+    static let cornerRadius: CGFloat = 24
+
+    /// Swatches offered in the category and wallet editors, in the order they are shown.
+    static let palette: [String] = [
+        "FF3B30", "FF9500", "D4C41A", "34C759", "00C7BE",
+        "0A84FF", "3634E0", "C644FC", "FF2D78",
+    ]
+
+    static func paletteHex(at index: Int) -> String {
+        palette[((index % palette.count) + palette.count) % palette.count]
+    }
+
+    static var skyGradient: LinearGradient {
+        LinearGradient(
+            colors: [Color(hex: "BFDDF7"), Color(hex: "E6F1FB"), Color(.systemGroupedBackground)],
+            startPoint: .top,
+            endPoint: .center
+        )
+    }
+}
+
+struct SkyBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Group {
+            if colorScheme == .dark {
+                LinearGradient(
+                    colors: [Color(hex: "0B2A4A"), Color(.systemBackground)],
+                    startPoint: .top,
+                    endPoint: .center
+                )
+            } else {
+                AppTheme.skyGradient
+            }
+        }
+        .ignoresSafeArea()
+    }
+}
+
+struct CardBackground: ViewModifier {
+    var padding: CGFloat = 20
+
+    func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
+    }
+}
+
+extension View {
+    func card(padding: CGFloat = 20) -> some View {
+        modifier(CardBackground(padding: padding))
+    }
 }
 
 extension Color {

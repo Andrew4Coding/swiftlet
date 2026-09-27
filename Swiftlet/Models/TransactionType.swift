@@ -9,6 +9,7 @@ import Foundation
 enum TransactionType: String, Codable, CaseIterable, Identifiable, AppEnum {
     case expense
     case income
+    case transfer
 
     var id: String {
         rawValue
@@ -18,6 +19,7 @@ enum TransactionType: String, Codable, CaseIterable, Identifiable, AppEnum {
         switch self {
         case .expense: "Expense"
         case .income: "Income"
+        case .transfer: "Transfer"
         }
     }
 
@@ -26,6 +28,6 @@ enum TransactionType: String, Codable, CaseIterable, Identifiable, AppEnum {
     }
 
     static var caseDisplayRepresentations: [TransactionType: DisplayRepresentation] {
-        [.expense: "Expense", .income: "Income"]
+        [.expense: "Expense", .income: "Income", .transfer: "Transfer"]
     }
 }

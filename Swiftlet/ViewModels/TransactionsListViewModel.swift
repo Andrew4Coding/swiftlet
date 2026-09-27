@@ -28,7 +28,7 @@ final class TransactionsListViewModel {
         }
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
-        let span = "\(formatter.string(from: range.lowerBound)) – \(formatter.string(from: range.upperBound))"
+        let span = "\(formatter.string(from: range.lowerBound)) to \(formatter.string(from: range.upperBound))"
         return selectedPeriod == .custom ? span : "\(selectedPeriod.displayName) (\(span))"
     }
 
