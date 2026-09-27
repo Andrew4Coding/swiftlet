@@ -22,10 +22,6 @@ enum CategorySymbolResolver {
         }
     }
 
-    static func symbol(forName name: String, scope: CategoryScope = .both) -> String {
-        icon(forName: name, scope: scope).symbolName
-    }
-
     private struct Rule {
         let keywords: [String]
         let icon: CategoryIconIntelligence.Icon

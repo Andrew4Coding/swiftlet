@@ -6,9 +6,9 @@
 import Foundation
 import FoundationModels
 
-/// Uses Apple Intelligence's on-device language model to pick the SF Symbol that best fits a
-/// category's name and description. Guided generation constrains the model to a curated symbol
-/// set, so it can never return an invalid symbol name. Falls back to `CategorySymbolResolver`
+/// Uses Apple Intelligence's on-device language model to pick the icon (emoji + colour) that
+/// best fits a category's name. Guided generation constrains the model to a curated set, so it
+/// can never return an invalid value. Falls back to `CategorySymbolResolver`
 /// (keyword matching) whenever the model is unavailable or errors.
 enum CategoryIconIntelligence {
     /// The closed set of icons the model is allowed to choose from. `@Generable` turns each
@@ -94,20 +94,6 @@ enum CategoryIconIntelligence {
             }
         }
     }
-
-    /// Curated SF Symbols offered in the manual icon picker.
-    static let iconOptions: [String] = {
-        var seen = Set<String>()
-        let extras = [
-            "creditcard.fill", "cart.fill", "fuelpump.fill", "tram.fill", "bicycle",
-            "wineglass.fill", "birthday.cake.fill", "graduationcap.fill", "stethoscope",
-            "hammer.fill", "wrench.and.screwdriver.fill", "wifi", "bolt.fill", "drop.fill",
-            "gift.fill", "star.fill", "leaf.fill", "pawprint.fill", "figure.2.and.child.holdinghands",
-            "dollarsign.circle.fill", "chart.pie.fill", "building.columns.fill", "shippingbox.fill",
-            "ticket.fill", "cup.and.saucer.fill", "bag.fill", "questionmark.circle.fill",
-        ]
-        return (Icon.allCases.map(\.symbolName) + extras).filter { seen.insert($0).inserted }
-    }()
 
     /// Whether the on-device model is ready to use right now.
     static var isAvailable: Bool {

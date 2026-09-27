@@ -7,7 +7,6 @@ import SwiftUI
 
 enum AppTheme {
     static let accent = Color(hex: "0A84FF")
-    static let categoryColor = accent
 
     static let income = Color(hex: "34C759")
     static let expense = Color(hex: "FF3B30")
