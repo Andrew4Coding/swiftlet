@@ -55,6 +55,15 @@ struct CustomCategoryEditorView: View {
                                 allowsNone: true
                             )
                         }
+
+                        FormField(title: "Monthly Budget") {
+                            HStack {
+                                Text("Rp").foregroundStyle(.secondary)
+                                TextField("No limit", text: $viewModel.budgetText)
+                                    .keyboardType(.numberPad)
+                            }
+                            .fieldBox()
+                        }
                     }
 
                     FormField(title: "Emoji") {
