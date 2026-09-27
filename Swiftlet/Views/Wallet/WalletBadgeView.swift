@@ -38,7 +38,7 @@ struct WalletChip: View {
     var body: some View {
         HStack(spacing: 4) {
             WalletBadgeView(wallet: transaction.wallet, size: 14)
-            Text(label)
+            Text(transaction.walletDescription)
                 .lineLimit(1)
                 .fixedSize()
         }
@@ -48,13 +48,6 @@ struct WalletChip: View {
         .padding(.trailing, 8)
         .padding(.vertical, 3)
         .background(Color(.tertiarySystemFill), in: Capsule())
-    }
-
-    private var label: String {
-        if transaction.type == .transfer, let destination = transaction.destinationWallet {
-            return "\(transaction.walletName) → \(destination.name)"
-        }
-        return transaction.walletName
     }
 }
 
