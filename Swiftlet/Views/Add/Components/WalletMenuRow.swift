@@ -46,6 +46,7 @@ struct WalletMenuRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .tint(.primary)
         }
         .font(.subheadline)
     }
