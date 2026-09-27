@@ -79,19 +79,6 @@ struct SignInView: View {
 
     private var hero: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 36, style: .continuous)
-                .fill(.white.opacity(0.18))
-                .background(.ultraThinMaterial.opacity(0.6), in: RoundedRectangle(cornerRadius: 36, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 36, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0.2)], startPoint: .top, endPoint: .bottom),
-                            lineWidth: 1.5
-                        )
-                )
-                .frame(width: 190, height: 250)
-                .shadow(color: Color(hex: "1E5A96").opacity(0.2), radius: 24, y: 12)
-
             Image("AppLogo")
                 .resizable()
                 .scaledToFit()
