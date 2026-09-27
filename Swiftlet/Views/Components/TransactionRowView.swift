@@ -22,12 +22,10 @@ struct TransactionRowView: View {
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
 
-                HStack(spacing: 6) {
-                    WalletChip(transaction: transaction)
-                    Text(transaction.date.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                WalletChip(transaction: transaction)
+                Text(transaction.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
