@@ -10,6 +10,8 @@ struct HomeView: View {
     @Query(sort: \Transaction.date, order: .reverse) private var allTransactions: [Transaction]
     @Query(sort: [SortDescriptor(\Wallet.sortIndex), SortDescriptor(\Wallet.createdAt)]) private var allWallets: [Wallet]
     @Query(sort: \TransactionCategory.sortIndex) private var categories: [TransactionCategory]
+    @Query(filter: #Predicate<RecurringTransaction> { $0.isActive }, sort: \RecurringTransaction.nextDueDate)
+    private var upcomingRecurring: [RecurringTransaction]
     @Environment(AuthenticationService.self) private var authService
 
     @State private var viewModel = HomeViewModel()
@@ -56,6 +58,8 @@ struct HomeView: View {
                     WalletCarousel(wallets: wallets) { isPresentingWalletEditor = true }
 
                     BudgetsCard(progress: BudgetCalculator.progress(for: categories, transactions: allTransactions))
+
+                    UpcomingRecurringCard(rules: upcomingRecurring)
 
                     let purposeSlices = viewModel.purposeBreakdown(from: allTransactions)
                     if !purposeSlices.isEmpty {
