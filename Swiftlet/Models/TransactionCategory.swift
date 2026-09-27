@@ -94,6 +94,8 @@ final class TransactionCategory {
     var createdAt: Date = Date.now
     var colorHex: String = ""
     var purposeRaw: String = ""
+    /// Monthly spending limit; zero means no budget.
+    var monthlyBudget: Decimal = 0
 
     @Relationship(deleteRule: .nullify, inverse: \Transaction.category)
     var transactions: [Transaction]? = []
@@ -101,6 +103,10 @@ final class TransactionCategory {
     var iconType: CategoryIconType {
         get { CategoryIconType(rawValue: iconTypeRaw) ?? .system }
         set { iconTypeRaw = newValue.rawValue }
+    }
+
+    var hasBudget: Bool {
+        monthlyBudget > 0
     }
 
     var purpose: CategoryPurpose? {
