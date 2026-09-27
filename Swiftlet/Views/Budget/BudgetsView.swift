@@ -52,6 +52,7 @@ struct BudgetsView: View {
                     ForEach(progress) { item in
                         Button { editing = item.category } label: {
                             BudgetProgressRow(progress: item)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }
@@ -69,6 +70,7 @@ struct BudgetsView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(Color.accentColor)
                         }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }

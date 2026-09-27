@@ -76,6 +76,7 @@ struct RecurringListView: View {
     private func row(for rule: RecurringTransaction) -> some View {
         Button { editorTarget = .edit(rule) } label: {
             RecurringRow(rule: rule)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
