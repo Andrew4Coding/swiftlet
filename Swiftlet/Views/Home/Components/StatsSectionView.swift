@@ -51,7 +51,7 @@ struct StatsSectionView: View {
                         .foregroundStyle(by: .value("Type", "Expense"))
                         .position(by: .value("Type", "Expense"))
                 }
-                .chartForegroundStyleScale(["Income": Color.green, "Expense": Color.red])
+                .chartForegroundStyleScale(["Income": AppTheme.income.gradient, "Expense": AppTheme.expense.gradient])
                 .chartLegend(position: .bottom, spacing: 8)
                 .chartYAxis {
                     AxisMarks { value in
@@ -63,9 +63,10 @@ struct StatsSectionView: View {
                         }
                     }
                 }
-                .frame(height: 240)
+                .frame(height: 220)
             }
         }
+        .card()
     }
 
     private func summaryTile(title: String, amount: Decimal, tint: Color) -> some View {

@@ -36,5 +36,6 @@ struct RecentTransactionsSection: View {
                 }
             }
         }
+        .card()
     }
 }
