@@ -38,16 +38,12 @@ struct SignInView: View {
 
     @State private var animateIn = false
     @State private var floatPhase = false
-    @State private var scrollID: Int? = 0
+    @State private var selection = 0
     @State private var autoAdvanceID = 0
 
     private static let privacyURL = URL(string: "https://andrew4coding.github.io/swiftlet/privacy.html")!
     private static let supportURL = URL(string: "https://andrew4coding.github.io/swiftlet/support.html")!
     private static let autoAdvanceInterval: Duration = .seconds(4)
-
-    private var selection: Int {
-        scrollID ?? 0
-    }
 
     private let slides: [OnboardingSlide] = [
         OnboardingSlide(
@@ -98,23 +94,19 @@ struct SignInView: View {
                     .opacity(animateIn ? 1 : 0)
                     .offset(y: animateIn ? 0 : 20)
 
-                GeometryReader { proxy in
-                    ScrollView(.horizontal) {
-                        LazyHStack(spacing: 0) {
-                            ForEach(slides) { slide in
-                                slideView(slide, pageWidth: proxy.size.width)
-                                    .frame(width: proxy.size.width, height: proxy.size.height)
-                                    .id(slide.id)
-                            }
-                        }
-                        .scrollTargetLayout()
-                    }
-                    .scrollTargetBehavior(.paging)
-                    .scrollPosition(id: $scrollID)
-                    .scrollIndicators(.hidden)
+                ZStack {
+                    slideView(slides[selection])
+                        .id(selection)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.94)),
+                            removal: .opacity
+                        ))
                 }
-                .opacity(animateIn ? 1 : 0)
-                .offset(y: animateIn ? 0 : 20)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .contentShape(Rectangle())
+                    .gesture(swipeGesture)
+                    .opacity(animateIn ? 1 : 0)
+                    .offset(y: animateIn ? 0 : 20)
 
                 pageIndicator
                     .padding(.vertical, 16)
@@ -130,9 +122,7 @@ struct SignInView: View {
         .task(id: autoAdvanceID) {
             try? await Task.sleep(for: Self.autoAdvanceInterval)
             guard !Task.isCancelled else { return }
-            withAnimation(.smooth(duration: 0.8)) {
-                scrollID = (selection + 1) % slides.count
-            }
+            show((selection + 1) % slides.count)
         }
         .onAppear {
             withAnimation(.spring(response: 0.7, dampingFraction: 0.85)) {
@@ -153,27 +143,32 @@ struct SignInView: View {
             .shadow(color: Color(hex: "1E5A96").opacity(0.25), radius: 8, y: 2)
     }
 
-    /// Elements counter-shift against the page scroll, so slides read as an in-place
-    /// cross-fade rather than a hard horizontal slide.
-    private func slideView(_ slide: OnboardingSlide, pageWidth: CGFloat) -> some View {
+    private func slideView(_ slide: OnboardingSlide) -> some View {
         VStack(spacing: 0) {
             tagline(for: slide)
                 .padding(.top, 10)
-                .scrollTransition(.interactive, axis: .horizontal) { content, phase in
-                    content
-                        .opacity(fade(phase.value))
-                        .offset(x: -phase.value * pageWidth * 0.75, y: abs(phase.value) * 12)
-                        .blur(radius: abs(phase.value) * 6)
-                }
             Spacer(minLength: 12)
-            hero(for: slide, pageWidth: pageWidth)
+            hero(for: slide)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 24)
     }
 
-    private func fade(_ progress: Double) -> Double {
-        max(0, 1 - abs(progress) * 1.6)
+    private var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: 20)
+            .onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height),
+                      abs(value.translation.width) > 40
+                else { return }
+                let step = value.translation.width < 0 ? 1 : -1
+                show((selection + step + slides.count) % slides.count)
+            }
+    }
+
+    private func show(_ index: Int) {
+        withAnimation(.easeInOut(duration: 0.35)) {
+            selection = index
+        }
     }
 
     private func tagline(for slide: OnboardingSlide) -> some View {
@@ -189,7 +184,7 @@ struct SignInView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func hero(for slide: OnboardingSlide, pageWidth: CGFloat) -> some View {
+    private func hero(for slide: OnboardingSlide) -> some View {
         ZStack {
             Image(slide.mascot)
                 .resizable()
@@ -197,32 +192,15 @@ struct SignInView: View {
                 .frame(width: 170, height: 170)
                 .shadow(color: Color(hex: "1E3A8A").opacity(0.25), radius: 16, y: 10)
                 .rotationEffect(.degrees(floatPhase ? 2 : -2))
-                .scrollTransition(.interactive, axis: .horizontal) { content, phase in
-                    content
-                        .opacity(fade(phase.value))
-                        .scaleEffect(1 - abs(phase.value) * 0.25)
-                        .offset(x: -phase.value * pageWidth * 0.8)
-                }
 
             ForEach(slide.orbs.indices, id: \.self) { index in
                 let orb = slide.orbs[index]
                 IconBadge(iconType: .emoji, iconValue: orb.emoji, colorHex: orb.colorHex, size: orb.size)
                     .offset(x: orb.x, y: orb.y + (floatPhase ? -6 : 6) * (index.isMultiple(of: 2) ? 1 : -1))
-                    .scrollTransition(.interactive, axis: .horizontal) { content, phase in
-                        content
-                            .opacity(fade(phase.value))
-                            .scaleEffect(1 - abs(phase.value) * 0.5)
-                            .offset(x: -phase.value * pageWidth * (0.55 + Double(index) * 0.1))
-                    }
             }
 
             calloutCard(slide.callout)
                 .offset(x: slide.callout.x, y: slide.callout.y + (floatPhase ? 4 : -4))
-                .scrollTransition(.interactive, axis: .horizontal) { content, phase in
-                    content
-                        .opacity(fade(phase.value))
-                        .offset(x: -phase.value * pageWidth * 0.7, y: abs(phase.value) * 30)
-                }
         }
         .frame(height: 300)
         .accessibilityHidden(true)
@@ -258,7 +236,7 @@ struct SignInView: View {
                     .fill(Color(hex: "1E5A96").opacity(slide.id == selection ? 0.8 : 0.25))
                     .frame(width: slide.id == selection ? 22 : 7, height: 7)
                     .onTapGesture {
-                        withAnimation(.smooth(duration: 0.6)) { scrollID = slide.id }
+                        show(slide.id)
                     }
             }
         }
