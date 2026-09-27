@@ -17,26 +17,21 @@ struct TransactionDetailView: View {
     @State private var isPresentingDeleteConfirm = false
     @State private var isPresentingReceipt = false
 
-    private var amountColor: Color {
-        transaction.type == .income ? .green : .red
-    }
-
-    private var signedAmountText: String {
-        let prefix = transaction.type == .income ? "+" : "-"
-        return "\(prefix)\(CurrencyFormatter.rupiah(transaction.amount))"
-    }
-
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 VStack(spacing: 12) {
-                    CategoryBadgeView(category: transaction.category, size: 64)
+                    if transaction.type == .transfer {
+                        IconBadge(iconType: .system, iconValue: "arrow.left.arrow.right", colorHex: "8E8E93", size: 64)
+                    } else {
+                        CategoryBadgeView(category: transaction.category, size: 64)
+                    }
                     Text(transaction.title)
                         .font(.title3.weight(.semibold))
                         .multilineTextAlignment(.center)
-                    Text(signedAmountText)
+                    Text(transaction.signedAmountText)
                         .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(amountColor)
+                        .foregroundStyle(transaction.type.amountColor)
                         .monospacedDigit()
                 }
                 .padding(.top, 12)
@@ -44,9 +39,11 @@ struct TransactionDetailView: View {
                 VStack(spacing: 0) {
                     detailRow(label: "Type", value: transaction.type.displayName)
                     Divider().padding(.leading, 16)
-                    detailRow(label: "Category", value: transaction.category?.name ?? "Uncategorized")
-                    Divider().padding(.leading, 16)
-                    detailRow(label: "Source", value: transaction.source.displayName)
+                    if transaction.type != .transfer {
+                        detailRow(label: "Category", value: transaction.category?.name ?? "Uncategorized")
+                        Divider().padding(.leading, 16)
+                    }
+                    detailRow(label: transaction.type == .transfer ? "Wallets" : "Wallet", value: transaction.walletDescription)
                     Divider().padding(.leading, 16)
                     detailRow(label: "Date", value: transaction.date.formatted(date: .long, time: .omitted))
                     if transaction.receiptImageData != nil {
@@ -58,7 +55,7 @@ struct TransactionDetailView: View {
                         detailRow(label: "Description", value: transaction.transactionDescription)
                     }
                 }
-                .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16))
+                .background(.background.secondary, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
             }
             .padding()
         }
