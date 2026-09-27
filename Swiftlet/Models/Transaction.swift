@@ -20,6 +20,9 @@ final class Transaction {
     var receiptImageData: Data?
 
     var category: TransactionCategory?
+    var wallet: Wallet?
+    /// Receiving wallet; only set for `.transfer` transactions.
+    var destinationWallet: Wallet?
 
     var type: TransactionType {
         get { TransactionType(rawValue: typeRaw) ?? .expense }
@@ -29,6 +32,10 @@ final class Transaction {
     var source: MoneySource {
         get { MoneySource(rawValue: sourceRaw) ?? .bca }
         set { sourceRaw = newValue.rawValue }
+    }
+
+    var walletName: String {
+        wallet?.name ?? source.displayName
     }
 
     init(
