@@ -12,6 +12,7 @@ struct AddTransactionView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TransactionCategory.sortIndex) private var allCategories: [TransactionCategory]
     @Query(sort: [SortDescriptor(\Wallet.sortIndex), SortDescriptor(\Wallet.createdAt)]) private var allWallets: [Wallet]
+    @Query private var allTransactions: [Transaction]
 
     @State private var viewModel: AddTransactionViewModel
     @State private var calculator: AmountCalculatorViewModel
@@ -36,6 +37,13 @@ struct AddTransactionView: View {
         _calculator = State(initialValue: AmountCalculatorViewModel())
     }
 
+    /// Budget or spike warning for the category being logged, so it's seen before adding more.
+    private var categoryInsight: SpendingInsight? {
+        guard viewModel.type == .expense, let category = viewModel.selectedCategory else { return nil }
+        return SpendingInsightEngine.insights(categories: [category], transactions: allTransactions)
+            .first { $0.kind != .paceAhead }
+    }
+
     private var wallets: [Wallet] {
         allWallets.filter { !$0.isArchived || $0.persistentModelID == viewModel.wallet?.persistentModelID }
     }
@@ -46,6 +54,13 @@ struct AddTransactionView: View {
                 TransactionTypePicker(selection: $viewModel.type)
                     .padding(.horizontal, 20)
                     .padding(.top, 4)
+
+                if let insight = categoryInsight {
+                    InsightBanner(insight: insight)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
+                        .transition(.opacity)
+                }
 
                 Spacer(minLength: 12)
                 amountDisplay
