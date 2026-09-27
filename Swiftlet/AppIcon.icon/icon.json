@@ -6,40 +6,24 @@
     {
       "layers" : [
         {
-          "glass" : false,
-          "hidden" : false,
-          "image-name" : "glasses.svg",
-          "name" : "glasses",
+          "image-name" : "Image 2.png",
+          "name" : "Image 2",
           "position" : {
-            "scale" : 8,
+            "scale" : 0.8,
             "translation-in-points" : [
-              0,
-              0
+              -47,
+              13
             ]
           }
         },
         {
-          "glass" : true,
-          "hidden" : false,
-          "image-name" : "smile.svg",
-          "name" : "smile",
+          "image-name" : "Image.png",
+          "name" : "Image",
           "position" : {
-            "scale" : 8,
+            "scale" : 0.8,
             "translation-in-points" : [
-              3.8641387515623364,
-              249.4296875
-            ]
-          }
-        },
-        {
-          "glass" : true,
-          "image-name" : "body.svg",
-          "name" : "body",
-          "position" : {
-            "scale" : 8,
-            "translation-in-points" : [
-              0,
-              0
+              15,
+              56
             ]
           }
         }

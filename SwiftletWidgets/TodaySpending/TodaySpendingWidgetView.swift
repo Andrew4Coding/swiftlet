@@ -10,6 +10,7 @@ import WidgetKit
 /// Widget-sized version of Home's "Spending by Category" donut: a compact ring plus a
 /// capped legend that adapts to the medium / large families.
 struct TodaySpendingWidgetView: View {
+    //    Widget Size
     @Environment(\.widgetFamily) private var family
     let entry: TodaySpendingEntry
 
