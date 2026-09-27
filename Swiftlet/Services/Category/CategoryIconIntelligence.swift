@@ -48,6 +48,51 @@ enum CategoryIconIntelligence {
             case .other: "tag.fill"
             }
         }
+
+        var emoji: String {
+            switch self {
+            case .food: "🍜"
+            case .drink: "☕️"
+            case .groceries: "🛒"
+            case .transport: "🚗"
+            case .travel: "🧳"
+            case .shopping: "🛍️"
+            case .bills: "🧾"
+            case .phone: "📱"
+            case .entertainment: "🎮"
+            case .health: "💊"
+            case .fitness: "🏋️"
+            case .education: "🎓"
+            case .pet: "🐾"
+            case .home: "🏠"
+            case .family: "👨‍👩‍👧"
+            case .salary: "💰"
+            case .refund: "↩️"
+            case .gift: "🎁"
+            case .investment: "📈"
+            case .savings: "🐷"
+            case .work: "💼"
+            case .donation: "💝"
+            case .tax: "🏛️"
+            case .transfer: "🔁"
+            case .other: "🏷️"
+            }
+        }
+
+        var colorHex: String {
+            switch self {
+            case .food, .donation: "FF3B30"
+            case .drink, .shopping, .home: "FF9500"
+            case .groceries, .salary, .fitness: "34C759"
+            case .transport, .phone, .transfer: "0A84FF"
+            case .travel, .health: "00C7BE"
+            case .bills, .tax: "D4C41A"
+            case .entertainment, .education: "C644FC"
+            case .pet, .family, .gift: "FF2D78"
+            case .investment, .savings, .work, .refund: "3634E0"
+            case .other: "8E8E93"
+            }
+        }
     }
 
     /// Curated SF Symbols offered in the manual icon picker.
@@ -69,13 +114,13 @@ enum CategoryIconIntelligence {
         SystemLanguageModel.default.availability == .available
     }
 
-    /// Best-effort icon suggestion. Always returns a valid SF Symbol name — the keyword
-    /// resolver's result when Apple Intelligence can't be used.
-    static func suggestSymbol(
+    /// Best-effort icon suggestion — the keyword resolver's pick when Apple Intelligence can't
+    /// be used.
+    static func suggestIcon(
         name: String,
         scope: CategoryScope
-    ) async -> String {
-        let fallback = CategorySymbolResolver.symbol(forName: name, scope: scope)
+    ) async -> Icon {
+        let fallback = CategorySymbolResolver.icon(forName: name, scope: scope)
 
         guard SystemLanguageModel.default.availability == .available else { return fallback }
 
@@ -92,7 +137,7 @@ enum CategoryIconIntelligence {
 
         do {
             let response = try await session.respond(to: prompt, generating: Icon.self)
-            return response.content.symbolName
+            return response.content
         } catch {
             return fallback
         }

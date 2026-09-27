@@ -76,12 +76,12 @@ final class AddTransactionViewModel {
             guard !Task.isCancelled else { return }
 
             self?.isSuggestingCategoryIcon = true
-            let symbol = await CategoryIconIntelligence.suggestSymbol(
+            let icon = await CategoryIconIntelligence.suggestIcon(
                 name: name,
                 scope: scope
             )
             guard !Task.isCancelled else { return }
-            self?.aiSuggestedSymbol = symbol
+            self?.aiSuggestedSymbol = icon.symbolName
             self?.isSuggestingCategoryIcon = false
         }
     }
