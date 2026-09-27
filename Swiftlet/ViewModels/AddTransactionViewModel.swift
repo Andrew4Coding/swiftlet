@@ -12,7 +12,8 @@ final class AddTransactionViewModel {
     var type: TransactionType = .expense
     var title: String = ""
     var amountText: String = ""
-    var source: MoneySource = .bca
+    var wallet: Wallet?
+    var destinationWallet: Wallet?
     var date: Date = .now
     var descriptionText: String = ""
     var selectedCategory: TransactionCategory?
@@ -34,7 +35,8 @@ final class AddTransactionViewModel {
         type = transaction.type
         title = transaction.title
         amountText = NSDecimalNumber(decimal: transaction.amount).stringValue
-        source = transaction.source
+        wallet = transaction.wallet
+        destinationWallet = transaction.destinationWallet
         date = transaction.date
         descriptionText = transaction.transactionDescription
         selectedCategory = transaction.category
@@ -48,14 +50,56 @@ final class AddTransactionViewModel {
             .sorted { ($0.sortIndex, $0.name) < ($1.sortIndex, $1.name) }
     }
 
-    /// Clears a category and/or source that no longer applies after the type is switched.
+    /// Clears a category that no longer applies after the type is switched.
     func typeDidChange() {
-        if let selected = selectedCategory, !selected.appliesTo.allows(type) {
+        if type == .transfer {
+            selectedCategory = nil
+        } else if let selected = selectedCategory, !selected.appliesTo.allows(type) {
             selectedCategory = nil
         }
-        if !source.scope.allows(type) {
-            source = MoneySource.available(for: type).first ?? .bca
+    }
+
+    @MainActor
+    func assignDefaultWallets(context: ModelContext) {
+        if wallet == nil {
+            wallet = WalletMigrator.ensureDefaultWallet(context: context)
         }
+        if destinationWallet == nil {
+            destinationWallet = WalletMigrator.activeWallets(context: context)
+                .first { $0.persistentModelID != wallet?.persistentModelID }
+        }
+    }
+
+    private var resolvedTitle: String {
+        let trimmed = title.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        if type == .transfer {
+            return "Transfer to \(destinationWallet?.name ?? "wallet")"
+        }
+        return selectedCategory?.name ?? type.displayName
+    }
+
+    var validationMessage: String? {
+        if (parsedAmount ?? 0) <= 0 {
+            return "Enter an amount"
+        }
+        if wallet == nil {
+            return "Choose a wallet"
+        }
+        switch type {
+        case .transfer:
+            guard let destinationWallet else { return "Choose where the money goes" }
+            if destinationWallet.persistentModelID == wallet?.persistentModelID {
+                return "Pick two different wallets"
+            }
+        case .expense, .income:
+            if selectedCategory == nil {
+                return "Choose a category"
+            }
+        }
+        return nil
     }
 
     var parsedAmount: Decimal? {
@@ -63,40 +107,34 @@ final class AddTransactionViewModel {
     }
 
     var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespaces).isEmpty
-            && (parsedAmount ?? 0) > 0
-            && selectedCategory != nil
+        validationMessage == nil
     }
 
     @discardableResult
     func save(context: ModelContext) -> Bool {
-        guard let amount = parsedAmount, isValid else {
-            errorMessage = "Please fill in a title, a valid amount, and choose a category."
+        guard let amount = parsedAmount, validationMessage == nil else {
+            errorMessage = validationMessage
             return false
         }
 
+        let transaction: Transaction
         if let editingTransaction {
-            editingTransaction.type = type
-            editingTransaction.title = title.trimmingCharacters(in: .whitespaces)
-            editingTransaction.amount = amount
-            editingTransaction.source = source
-            editingTransaction.date = date
-            editingTransaction.transactionDescription = descriptionText.trimmingCharacters(in: .whitespaces)
-            editingTransaction.category = selectedCategory
-            editingTransaction.receiptImageData = receiptImageData
+            transaction = editingTransaction
         } else {
-            let transaction = Transaction(
-                type: type,
-                title: title.trimmingCharacters(in: .whitespaces),
-                amount: amount,
-                source: source,
-                date: date,
-                description: descriptionText.trimmingCharacters(in: .whitespaces),
-                category: selectedCategory,
-                receiptImageData: receiptImageData
-            )
+            transaction = Transaction(type: type, title: "", amount: amount, source: .bca, date: date, category: nil)
             context.insert(transaction)
         }
+
+        transaction.type = type
+        transaction.title = resolvedTitle
+        transaction.amount = amount
+        transaction.date = date
+        transaction.transactionDescription = descriptionText.trimmingCharacters(in: .whitespaces)
+        transaction.category = type == .transfer ? nil : selectedCategory
+        transaction.wallet = wallet
+        transaction.destinationWallet = type == .transfer ? destinationWallet : nil
+        transaction.receiptImageData = receiptImageData
+
         try? context.save()
         return true
     }
