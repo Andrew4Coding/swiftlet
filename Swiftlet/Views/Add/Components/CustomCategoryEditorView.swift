@@ -27,7 +27,9 @@ struct CustomCategoryEditorView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    intro
+                    if !viewModel.isEditing {
+                        intro
+                    }
 
                     FormField(title: "Name") {
                         TextField("e.g. Coffee runs, Groceries, Gym", text: $viewModel.name)
@@ -51,9 +53,12 @@ struct CustomCategoryEditorView: View {
                                 placeholder: "Select purpose",
                                 selection: $viewModel.purpose,
                                 options: CategoryPurpose.allCases,
-                                label: { "\($0.displayName) · \($0.detail)" },
+                                label: \.displayName,
                                 allowsNone: true
                             )
+                            Text(viewModel.purpose?.detail ?? "Groups spending into the 50/30/20 breakdown.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
 
                         FormField(title: "Monthly Budget") {
@@ -109,7 +114,7 @@ struct CustomCategoryEditorView: View {
 
     private var intro: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(viewModel.isEditing ? "Edit Category" : "Add a New Category")
+            Text("Add a New Category")
                 .font(.title3.weight(.semibold))
             Text("Swiftlet uses it to understand your spending habits and keep your budgets on track.")
                 .font(.subheadline)
