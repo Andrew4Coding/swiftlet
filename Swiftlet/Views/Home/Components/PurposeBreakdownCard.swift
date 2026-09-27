@@ -21,11 +21,14 @@ struct PurposeBreakdownCard: View {
             }
 
             GeometryReader { proxy in
-                HStack(spacing: 3) {
-                    ForEach(slices) { slice in
+                let visible = slices.filter { $0.amount > 0 }
+                let spacing: CGFloat = 3
+                let available = proxy.size.width - spacing * CGFloat(max(visible.count - 1, 0))
+                HStack(spacing: spacing) {
+                    ForEach(visible) { slice in
                         Capsule()
                             .fill(color(for: slice).gradient)
-                            .frame(width: max(6, proxy.size.width * slice.fraction - 3))
+                            .frame(width: available * slice.fraction)
                     }
                 }
             }
