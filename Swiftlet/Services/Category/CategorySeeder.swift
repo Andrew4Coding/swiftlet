@@ -31,6 +31,7 @@ enum CategorySeeder {
                 sortIndex: startIndex + offset,
                 colorHex: definition.icon.colorHex
             )
+            category.purpose = definition.purpose
             context.insert(category)
             didInsert = true
         }
@@ -55,6 +56,9 @@ enum CategorySeeder {
             category.iconType = .emoji
             category.iconValue = definition.icon.emoji
             category.colorHex = definition.icon.colorHex
+            if category.purpose == nil {
+                category.purpose = definition.purpose
+            }
             didChange = true
         }
         return didChange
@@ -88,16 +92,18 @@ enum CategorySeeder {
         let name: String
         let icon: CategoryIconIntelligence.Icon
         let scope: CategoryScope
+        var purpose: CategoryPurpose?
         var legacySymbol: String?
     }
 
     private static let defaultDefinitions: [Definition] = [
-        Definition(name: "Food", icon: .food, scope: .expense),
-        Definition(name: "Transport", icon: .transport, scope: .expense),
-        Definition(name: "Shopping", icon: .shopping, scope: .expense),
-        Definition(name: "Bills", icon: .bills, scope: .expense),
-        Definition(name: "Entertainment", icon: .entertainment, scope: .expense),
-        Definition(name: "Health", icon: .health, scope: .expense),
+        Definition(name: "Food", icon: .food, scope: .expense, purpose: .needs),
+        Definition(name: "Transport", icon: .transport, scope: .expense, purpose: .needs),
+        Definition(name: "Shopping", icon: .shopping, scope: .expense, purpose: .wants),
+        Definition(name: "Bills", icon: .bills, scope: .expense, purpose: .needs),
+        Definition(name: "Entertainment", icon: .entertainment, scope: .expense, purpose: .wants),
+        Definition(name: "Health", icon: .health, scope: .expense, purpose: .needs),
+        Definition(name: "Savings", icon: .savings, scope: .expense, purpose: .savings),
         Definition(name: "Salary", icon: .salary, scope: .income),
         Definition(name: "Reimburse", icon: .refund, scope: .income),
         Definition(name: "Gift", icon: .gift, scope: .income),
