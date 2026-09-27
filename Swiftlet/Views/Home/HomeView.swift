@@ -8,25 +8,42 @@ import SwiftUI
 
 struct HomeView: View {
     @Query(sort: \Transaction.date, order: .reverse) private var allTransactions: [Transaction]
+    @Query(sort: [SortDescriptor(\Wallet.sortIndex), SortDescriptor(\Wallet.createdAt)]) private var allWallets: [Wallet]
+    @Environment(AuthenticationService.self) private var authService
+
     @State private var viewModel = HomeViewModel()
     @State private var isPresentingAdd = false
+    @State private var isPresentingWalletEditor = false
+
+    private var wallets: [Wallet] {
+        allWallets.filter { !$0.isArchived }
+    }
+
+    private var displayName: String? {
+        if case let .signedIn(_, name) = authService.state { name } else { nil }
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    Picker("Period", selection: $viewModel.selectedPeriod) {
-                        ForEach([PeriodOption.today, .thisWeek, .thisMonth, .all]) { option in
-                            Text(option.displayName).tag(option)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+                VStack(spacing: 20) {
+                    HomeHeader(displayName: displayName)
 
-                    HomeSummaryCard(
-                        balance: viewModel.balance(from: allTransactions),
-                        totalIncome: viewModel.totalIncome(from: allTransactions),
-                        totalExpense: viewModel.totalExpense(from: allTransactions)
+                    BalanceCard(
+                        totalBalance: wallets.reduce(Decimal(0)) { $0 + $1.balance },
+                        income: viewModel.totalIncome(from: allTransactions),
+                        expense: viewModel.totalExpense(from: allTransactions),
+                        incomeChange: viewModel.change(of: .income, from: allTransactions),
+                        expenseChange: viewModel.change(of: .expense, from: allTransactions),
+                        period: $viewModel.selectedPeriod
                     )
+
+                    WalletCarousel(wallets: wallets) { isPresentingWalletEditor = true }
+
+                    let purposeSlices = viewModel.purposeBreakdown(from: allTransactions)
+                    if !purposeSlices.isEmpty {
+                        PurposeBreakdownCard(slices: purposeSlices)
+                    }
 
                     CategoryBreakdownChart(slices: viewModel.categoryBreakdown(from: allTransactions))
 
@@ -34,11 +51,21 @@ struct HomeView: View {
 
                     RecentTransactionsSection(transactions: viewModel.recentTransactions(from: allTransactions))
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
             }
-            .navigationTitle("Home")
+            .background(SkyBackground())
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add Transaction", systemImage: "plus") { isPresentingAdd = true }
+                        .buttonStyle(.glassProminent)
+                }
+            }
             .sheet(isPresented: $isPresentingAdd) {
                 AddTransactionView()
+            }
+            .sheet(isPresented: $isPresentingWalletEditor) {
+                WalletEditorView()
             }
         }
     }
@@ -46,5 +73,6 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
-        .modelContainer(for: [Transaction.self, TransactionCategory.self], inMemory: true)
+        .environment(AuthenticationService())
+        .modelContainer(for: [Transaction.self, TransactionCategory.self, Wallet.self], inMemory: true)
 }
