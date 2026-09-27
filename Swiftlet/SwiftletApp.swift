@@ -35,10 +35,13 @@ struct SwiftletApp: App {
             }
             .task {
                 consumePendingReceipt()
+                WalletMigrator.run(context: container.mainContext)
                 TodaySpendingSnapshotWriter.rebuild(using: container.mainContext)
             }
             .onChange(of: scenePhase) { _, phase in
-                if phase != .active {
+                if phase == .active {
+                    WalletMigrator.run(context: container.mainContext)
+                } else {
                     TodaySpendingSnapshotWriter.rebuild(using: container.mainContext)
                 }
             }
