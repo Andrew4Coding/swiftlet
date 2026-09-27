@@ -12,14 +12,6 @@ import SwiftUI
 struct CategoryBreakdownChart: View {
     let slices: [CategorySlice]
 
-    private static let palette: [Color] = [
-        .blue, .green, .orange, .purple, .pink, .teal, .red, .indigo, .brown, .mint,
-    ]
-
-    private func color(for index: Int) -> Color {
-        Self.palette[index % Self.palette.count]
-    }
-
     var body: some View {
         VStack(spacing: 16) {
             Text("Spending by Category")
@@ -35,27 +27,29 @@ struct CategoryBreakdownChart: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 20)
             } else {
-                Chart(Array(slices.enumerated()), id: \.element.id) { index, slice in
+                Chart(slices) { slice in
                     SectorMark(
                         angle: .value("Amount", slice.fraction),
                         innerRadius: .ratio(0.6),
                         angularInset: 1.5
                     )
                     .cornerRadius(4)
-                    .foregroundStyle(color(for: index))
+                    .foregroundStyle(Color(hex: slice.colorHex).gradient)
                 }
                 .frame(height: 200)
 
                 VStack(spacing: 8) {
-                    ForEach(Array(slices.enumerated()), id: \.element.id) { index, slice in
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(color(for: index))
-                                .frame(width: 10, height: 10)
+                    ForEach(slices) { slice in
+                        HStack(spacing: 10) {
+                            CategoryBadgeView(category: slice.icon, size: 26)
                             Text(slice.name)
                                 .font(.subheadline)
                                 .lineLimit(1)
                             Spacer()
+                            Text(CurrencyFormatter.rupiahCompact(slice.amount))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
                             Text(slice.fraction, format: .percent.precision(.fractionLength(0)))
                                 .font(.subheadline.weight(.semibold))
                                 .monospacedDigit()
@@ -65,8 +59,7 @@ struct CategoryBreakdownChart: View {
                 }
             }
         }
-        .padding(20)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20))
+        .card()
     }
 }
 
