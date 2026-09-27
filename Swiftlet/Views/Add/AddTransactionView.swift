@@ -16,6 +16,7 @@ struct AddTransactionView: View {
     @State private var receiptPhotoItem: PhotosPickerItem?
     @State private var isPresentingCamera = false
     @State private var isPresentingReceiptViewer = false
+    @State private var categoryEditor: CategoryEditorTarget?
 
     init(transaction: Transaction? = nil) {
         if let transaction {
@@ -69,8 +70,8 @@ struct AddTransactionView: View {
                         CategoryPickerListView(
                             categories: viewModel.availableCategories(from: allCategories),
                             selection: $viewModel.selectedCategory,
-                            onCreateNew: { viewModel.beginCreatingCategory() },
-                            onEdit: { viewModel.beginEditingCategory($0) },
+                            onCreateNew: { categoryEditor = .new },
+                            onEdit: { categoryEditor = .edit($0) },
                             onDelete: { viewModel.deleteCategory($0, context: modelContext) },
                             onTogglePin: { viewModel.togglePin($0, context: modelContext) },
                             onReorder: { viewModel.reorderCategories($0, context: modelContext) }
@@ -134,8 +135,11 @@ struct AddTransactionView: View {
                     }
                 }
             }
-            .sheet(isPresented: $viewModel.isPresentingCustomCategoryEditor) {
-                CustomCategoryEditorView(viewModel: viewModel)
+            .sheet(item: $categoryEditor) { target in
+                CustomCategoryEditorView(
+                    editing: target.category,
+                    defaultScope: viewModel.type == .income ? .income : .expense
+                ) { viewModel.selectedCategory = $0 }
             }
             .fullScreenCover(isPresented: $isPresentingCamera) {
                 CameraPicker { data in

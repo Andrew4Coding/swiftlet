@@ -18,74 +18,6 @@ final class AddTransactionViewModel {
     var selectedCategory: TransactionCategory?
     var receiptImageData: Data?
 
-    var isPresentingCustomCategoryEditor = false
-    var newCategoryName: String = ""
-    var newCategoryScope: CategoryScope = .expense
-
-    /// Symbol the user picked by hand in the editor. When set, it wins over every automatic
-    /// suggestion; `nil` means "let Apple Intelligence / the resolver choose".
-    var manuallyPickedSymbol: String?
-
-    /// Non-nil when the category editor sheet is editing an existing category rather than
-    /// creating a new one.
-    private(set) var editingCategory: TransactionCategory?
-
-    var isEditingCategory: Bool {
-        editingCategory != nil
-    }
-
-    /// Icon chosen by Apple Intelligence for the current name/description, when available.
-    var aiSuggestedSymbol: String?
-    var isSuggestingCategoryIcon = false
-    private var iconSuggestionTask: Task<Void, Never>?
-
-    /// Symbol the new/edited category will get — Apple Intelligence's pick when we have one,
-    /// otherwise the keyword-based resolver. Never chosen by hand.
-    var resolvedCategorySymbol: String {
-        manuallyPickedSymbol
-            ?? aiSuggestedSymbol
-            ?? CategorySymbolResolver.symbol(forName: newCategoryName, scope: newCategoryScope)
-    }
-
-    /// Whether the icon is currently being chosen automatically rather than by hand.
-    var isUsingAutomaticIcon: Bool {
-        manuallyPickedSymbol == nil
-    }
-
-    var isAppleIntelligenceIconAvailable: Bool {
-        CategoryIconIntelligence.isAvailable
-    }
-
-    /// Debounced request for an Apple Intelligence icon suggestion based on the current
-    /// name/description/scope. Safe to call on every keystroke.
-    @MainActor
-    func requestIconSuggestion() {
-        iconSuggestionTask?.cancel()
-
-        let name = newCategoryName.trimmingCharacters(in: .whitespaces)
-        let scope = newCategoryScope
-
-        guard manuallyPickedSymbol == nil, name.count >= 2, CategoryIconIntelligence.isAvailable else {
-            aiSuggestedSymbol = nil
-            isSuggestingCategoryIcon = false
-            return
-        }
-
-        iconSuggestionTask = Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(500))
-            guard !Task.isCancelled else { return }
-
-            self?.isSuggestingCategoryIcon = true
-            let icon = await CategoryIconIntelligence.suggestIcon(
-                name: name,
-                scope: scope
-            )
-            guard !Task.isCancelled else { return }
-            self?.aiSuggestedSymbol = icon.symbolName
-            self?.isSuggestingCategoryIcon = false
-        }
-    }
-
     var errorMessage: String?
 
     /// Non-nil when this view model is editing an existing transaction rather than creating a new one.
@@ -136,10 +68,6 @@ final class AddTransactionViewModel {
             && selectedCategory != nil
     }
 
-    var isCustomCategoryValid: Bool {
-        !newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty
-    }
-
     @discardableResult
     func save(context: ModelContext) -> Bool {
         guard let amount = parsedAmount, isValid else {
@@ -171,67 +99,6 @@ final class AddTransactionViewModel {
         }
         try? context.save()
         return true
-    }
-
-    /// Resets the editor fields and opens the sheet in "create" mode.
-    func beginCreatingCategory() {
-        editingCategory = nil
-        newCategoryName = ""
-        newCategoryScope = type == .income ? .income : .expense
-        manuallyPickedSymbol = nil
-        iconSuggestionTask?.cancel()
-        aiSuggestedSymbol = nil
-        isSuggestingCategoryIcon = false
-        isPresentingCustomCategoryEditor = true
-    }
-
-    /// Populates the editor fields from an existing category and opens the sheet in "edit" mode.
-    func beginEditingCategory(_ category: TransactionCategory) {
-        editingCategory = category
-        newCategoryName = category.name
-        newCategoryScope = category.appliesTo
-        manuallyPickedSymbol = category.iconValue
-        iconSuggestionTask?.cancel()
-        aiSuggestedSymbol = nil
-        isSuggestingCategoryIcon = false
-        isPresentingCustomCategoryEditor = true
-    }
-
-    @discardableResult
-    func saveCustomCategory(context: ModelContext) -> TransactionCategory? {
-        guard isCustomCategoryValid else { return nil }
-
-        let trimmedName = newCategoryName.trimmingCharacters(in: .whitespaces)
-        let symbolName = resolvedCategorySymbol
-
-        let category: TransactionCategory
-        if let editingCategory {
-            editingCategory.name = trimmedName
-            editingCategory.iconType = .system
-            editingCategory.iconValue = symbolName
-            editingCategory.appliesTo = newCategoryScope
-            category = editingCategory
-        } else {
-            let existing = (try? context.fetch(FetchDescriptor<TransactionCategory>())) ?? []
-            let nextIndex = (existing.map(\.sortIndex).max() ?? -1) + 1
-            let created = TransactionCategory(
-                name: trimmedName,
-                iconType: .system,
-                iconValue: symbolName,
-                appliesTo: newCategoryScope,
-                isDefault: false,
-                sortIndex: nextIndex
-            )
-            context.insert(created)
-            category = created
-        }
-
-        try? context.save()
-
-        selectedCategory = category
-        isPresentingCustomCategoryEditor = false
-
-        return category
     }
 
     /// Deletes a category. `Transaction.category` nullifies on delete, so existing
