@@ -40,6 +40,7 @@ struct WalletChip: View {
             WalletBadgeView(wallet: transaction.wallet, size: 14)
             Text(label)
                 .lineLimit(1)
+                .fixedSize()
         }
         .font(.caption2.weight(.semibold))
         .foregroundStyle(.secondary)
