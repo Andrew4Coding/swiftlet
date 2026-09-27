@@ -12,7 +12,6 @@ struct HomeView: View {
     @Query(sort: \TransactionCategory.sortIndex) private var categories: [TransactionCategory]
     @Query(filter: #Predicate<RecurringTransaction> { $0.isActive }, sort: \RecurringTransaction.nextDueDate)
     private var upcomingRecurring: [RecurringTransaction]
-    @Environment(AuthenticationService.self) private var authService
 
     @State private var viewModel = HomeViewModel()
     @State private var isPresentingAdd = false
@@ -28,16 +27,10 @@ struct HomeView: View {
             .filter { !dismissedInsightIDs.contains($0.id) && !InsightDismissals.isDismissed($0) }
     }
 
-    private var displayName: String? {
-        if case let .signedIn(_, name) = authService.state { name } else { nil }
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    HomeHeader(displayName: displayName)
-
                     BalanceCard(
                         totalBalance: wallets.reduce(Decimal(0)) { $0 + $1.balance },
                         income: viewModel.totalIncome(from: allTransactions),
@@ -94,6 +87,5 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
-        .environment(AuthenticationService())
         .modelContainer(for: [Transaction.self, TransactionCategory.self, Wallet.self], inMemory: true)
 }
