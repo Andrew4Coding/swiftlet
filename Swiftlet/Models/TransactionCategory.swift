@@ -8,6 +8,7 @@ import SwiftData
 
 enum CategoryIconType: String, Codable {
     case system
+    case emoji
 }
 
 enum CategoryScope: String, Codable, CaseIterable, Identifiable {
@@ -48,6 +49,7 @@ final class TransactionCategory {
     var isPinned: Bool = false
     var sortIndex: Int = 0
     var createdAt: Date = Date.now
+    var colorHex: String = ""
 
     @Relationship(deleteRule: .nullify, inverse: \Transaction.category)
     var transactions: [Transaction]? = []
@@ -55,6 +57,12 @@ final class TransactionCategory {
     var iconType: CategoryIconType {
         get { CategoryIconType(rawValue: iconTypeRaw) ?? .system }
         set { iconTypeRaw = newValue.rawValue }
+    }
+
+    /// Legacy rows created before per-category colours have an empty `colorHex`; they fall back
+    /// to a stable palette slot so they don't all render in the same colour.
+    var resolvedColorHex: String {
+        colorHex.isEmpty ? AppTheme.paletteHex(at: sortIndex) : colorHex
     }
 
     var appliesTo: CategoryScope {
@@ -70,6 +78,7 @@ final class TransactionCategory {
         isDefault: Bool = false,
         isPinned: Bool = false,
         sortIndex: Int = 0,
+        colorHex: String = "",
         createdAt: Date = .now
     ) {
         self.name = name
@@ -79,6 +88,7 @@ final class TransactionCategory {
         self.isDefault = isDefault
         self.isPinned = isPinned
         self.sortIndex = sortIndex
+        self.colorHex = colorHex
         self.createdAt = createdAt
     }
 
