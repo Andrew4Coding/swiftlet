@@ -79,12 +79,11 @@ struct SignInView: View {
 
     private var hero: some View {
         ZStack {
-            Image("AppLogo")
+            Image("Mascot")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 128, height: 128)
-                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-                .shadow(color: .black.opacity(0.15), radius: 16, y: 8)
+                .frame(width: 170, height: 170)
+                .shadow(color: Color(hex: "1E3A8A").opacity(0.25), radius: 16, y: 10)
                 .rotationEffect(.degrees(floatPhase ? 2 : -2))
 
             ForEach(orbs.indices, id: \.self) { index in
