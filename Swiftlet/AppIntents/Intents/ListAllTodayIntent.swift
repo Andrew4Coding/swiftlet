@@ -29,7 +29,7 @@ struct TodayTransactionsIntent: AppIntent {
         let entities = txs.map(TransactionEntity.init)
 
         let list = entities
-            .map { "\($0.title) — \(CurrencyFormatter.rupiah($0.amount))" }
+            .map { "\($0.title): \(CurrencyFormatter.rupiah($0.amount))" }
             .joined(separator: "\n")
 
         let total = txs.reduce(Decimal(0)) { total, transaction in
