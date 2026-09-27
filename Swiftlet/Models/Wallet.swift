@@ -26,6 +26,8 @@ final class Wallet {
     @Relationship(deleteRule: .nullify, inverse: \Transaction.destinationWallet)
     var incomingTransfers: [Transaction]? = []
 
+    var recurringTransactions: [RecurringTransaction]? = []
+
     init(
         name: String,
         emoji: String = "👛",

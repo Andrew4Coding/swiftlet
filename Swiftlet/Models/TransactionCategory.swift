@@ -100,6 +100,8 @@ final class TransactionCategory {
     @Relationship(deleteRule: .nullify, inverse: \Transaction.category)
     var transactions: [Transaction]? = []
 
+    var recurringTransactions: [RecurringTransaction]? = []
+
     var iconType: CategoryIconType {
         get { CategoryIconType(rawValue: iconTypeRaw) ?? .system }
         set { iconTypeRaw = newValue.rawValue }

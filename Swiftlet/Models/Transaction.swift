@@ -23,6 +23,7 @@ final class Transaction {
     var wallet: Wallet?
     /// Receiving wallet; only set for `.transfer` transactions.
     var destinationWallet: Wallet?
+    var recurringSource: RecurringTransaction?
 
     var type: TransactionType {
         get { TransactionType(rawValue: typeRaw) ?? .expense }
