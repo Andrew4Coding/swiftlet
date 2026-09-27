@@ -38,6 +38,22 @@ final class Transaction {
         wallet?.name ?? source.displayName
     }
 
+    var walletDescription: String {
+        if type == .transfer, let destinationWallet {
+            return "\(walletName) → \(destinationWallet.name)"
+        }
+        return walletName
+    }
+
+    var signedAmountText: String {
+        let prefix = switch type {
+        case .income: "+"
+        case .expense: "-"
+        case .transfer: ""
+        }
+        return prefix + CurrencyFormatter.rupiah(amount)
+    }
+
     init(
         type: TransactionType,
         title: String,
