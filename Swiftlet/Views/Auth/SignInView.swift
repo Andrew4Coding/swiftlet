@@ -8,7 +8,8 @@ import SwiftUI
 
 private struct OnboardingSlide: Identifiable {
     struct Orb {
-        let emoji: String
+        var iconType: CategoryIconType = .emoji
+        let icon: String
         let colorHex: String
         let x: CGFloat
         let y: CGFloat
@@ -16,7 +17,7 @@ private struct OnboardingSlide: Identifiable {
     }
 
     struct Callout {
-        let emoji: String
+        let symbol: String
         let colorHex: String
         let title: String
         let detail: String
@@ -51,11 +52,11 @@ struct SignInView: View {
             headline: "See your money,",
             accent: "swiftly",
             orbs: [
-                .init(emoji: "🍜", colorHex: "FF3B30", x: -120, y: -100, size: 52),
-                .init(emoji: "🧳", colorHex: "00C7BE", x: 124, y: -70, size: 46),
-                .init(emoji: "🛍️", colorHex: "FF9500", x: -128, y: 70, size: 44),
+                .init(icon: "🍜", colorHex: "FF3B30", x: -120, y: -100, size: 52),
+                .init(icon: "🧳", colorHex: "00C7BE", x: 124, y: -70, size: 46),
+                .init(icon: "🛍️", colorHex: "FF9500", x: -128, y: 70, size: 44),
             ],
-            callout: .init(emoji: "💸", colorHex: "FF3B30", title: "Spent today", detail: "Rp 45.000", x: 70, y: 118)
+            callout: .init(symbol: "arrow.up.right", colorHex: "FF3B30", title: "Spent today", detail: "Rp 45.000", x: 70, y: 118)
         ),
         OnboardingSlide(
             id: 1,
@@ -63,11 +64,11 @@ struct SignInView: View {
             headline: "Every wallet,",
             accent: "in one place",
             orbs: [
-                .init(emoji: "💳", colorHex: "FF2D78", x: -122, y: -96, size: 52),
-                .init(emoji: "🛒", colorHex: "34C759", x: 124, y: -80, size: 46),
-                .init(emoji: "☕️", colorHex: "FF9500", x: 128, y: 40, size: 42),
+                .init(iconType: .system, icon: "creditcard.fill", colorHex: "FF2D78", x: -122, y: -96, size: 52),
+                .init(iconType: .system, icon: "building.columns.fill", colorHex: "3634E0", x: 124, y: -80, size: 46),
+                .init(iconType: .system, icon: "iphone", colorHex: "FF9500", x: 128, y: 40, size: 42),
             ],
-            callout: .init(emoji: "👛", colorHex: "34C759", title: "Cash", detail: "Rp 640.000", x: -40, y: 122)
+            callout: .init(symbol: "banknote.fill", colorHex: "34C759", title: "Cash", detail: "Rp 640.000", x: -40, y: 122)
         ),
         OnboardingSlide(
             id: 2,
@@ -75,11 +76,11 @@ struct SignInView: View {
             headline: "Plan your future,",
             accent: "one step ahead",
             orbs: [
-                .init(emoji: "🐷", colorHex: "3634E0", x: -124, y: -92, size: 52),
-                .init(emoji: "📈", colorHex: "34C759", x: 122, y: -84, size: 46),
-                .init(emoji: "🏠", colorHex: "FF9500", x: -130, y: 64, size: 44),
+                .init(icon: "🐷", colorHex: "3634E0", x: -124, y: -92, size: 52),
+                .init(icon: "📈", colorHex: "34C759", x: 122, y: -84, size: 46),
+                .init(icon: "🏠", colorHex: "FF9500", x: -130, y: 64, size: 44),
             ],
-            callout: .init(emoji: "🔁", colorHex: "0A84FF", title: "Netflix tomorrow", detail: "Rp 186.000 · Monthly", x: 56, y: 120)
+            callout: .init(symbol: "repeat", colorHex: "0B7A50", title: "Netflix tomorrow", detail: "Rp 186.000 · Monthly", x: 56, y: 120)
         ),
     ]
 
@@ -191,7 +192,7 @@ struct SignInView: View {
 
             ForEach(slide.orbs.indices, id: \.self) { index in
                 let orb = slide.orbs[index]
-                IconBadge(iconType: .emoji, iconValue: orb.emoji, colorHex: orb.colorHex, size: orb.size)
+                IconBadge(iconType: orb.iconType, iconValue: orb.icon, colorHex: orb.colorHex, size: orb.size)
                     .offset(x: orb.x, y: orb.y + (floatPhase ? -6 : 6) * (index.isMultiple(of: 2) ? 1 : -1))
             }
 
@@ -204,7 +205,7 @@ struct SignInView: View {
 
     private func calloutCard(_ callout: OnboardingSlide.Callout) -> some View {
         HStack(spacing: 10) {
-            IconBadge(iconType: .emoji, iconValue: callout.emoji, colorHex: callout.colorHex, size: 32)
+            IconBadge(iconType: .system, iconValue: callout.symbol, colorHex: callout.colorHex, size: 32)
             VStack(alignment: .leading, spacing: 3) {
                 Text(callout.title)
                     .font(.caption.weight(.semibold))

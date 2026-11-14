@@ -22,7 +22,7 @@ struct UpcomingRecurringCard: View {
 
             if rules.isEmpty {
                 HStack(spacing: 12) {
-                    Text("🔁").font(.largeTitle)
+                    DSIconCircle(systemImage: "repeat", size: 44)
                     Text("Track subscriptions, rent or salary once. Swiftlet adds them for you and reminds you the day before.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
