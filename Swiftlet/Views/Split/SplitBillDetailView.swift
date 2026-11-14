@@ -14,6 +14,7 @@ struct SplitBillDetailView: View {
 
     @State private var paymentTarget: SplitShare?
     @State private var isConfirmingDelete = false
+    @State private var isEditing = false
 
     var body: some View {
         List {
@@ -27,16 +28,25 @@ struct SplitBillDetailView: View {
             peopleSection
             if !bill.sortedItems.isEmpty { itemsSection }
             if bill.service + bill.tax + bill.discount > 0 { extrasSection }
-
-            Section {
-                Button("Delete split", systemImage: "trash", role: .destructive) {
-                    isConfirmingDelete = true
-                }
-            }
         }
         .listStyle(.insetGrouped)
         .navigationTitle(bill.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button("Edit items", systemImage: "pencil") { isEditing = true }
+                    Button("Delete split", systemImage: "trash", role: .destructive) {
+                        isConfirmingDelete = true
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis")
+                }
+            }
+        }
+        .sheet(isPresented: $isEditing) {
+            SplitBillEditorView(editing: bill)
+        }
         .sheet(item: $paymentTarget) { share in
             RecordPaymentSheet(share: share)
                 .presentationDetents([.height(300)])
@@ -69,7 +79,9 @@ struct SplitBillDetailView: View {
                     HStack {
                         Text(share.name).font(.body.weight(.medium))
                         Spacer()
-                        Text(share.amount.rupiah).monospacedDigit()
+                        Text(share.amount.rupiah)
+                            .monospacedDigit()
+                            .foregroundStyle(share.isSettled ? Color.primary : Color.ds(.warning))
                     }
 
                     if share.isSettled {
@@ -81,9 +93,11 @@ struct SplitBillDetailView: View {
                             moreMenu(for: share)
                         }
                     } else {
-                        Text(share.settledAmount > 0 ? "\(share.outstanding.rupiah) left to pay" : "Owes \(share.outstanding.rupiah)")
-                            .font(.subheadline)
-                            .foregroundStyle(Color.ds(.warning))
+                        if share.settledAmount > 0 {
+                            Text("\(share.outstanding.rupiah) left to pay")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.ds(.warning))
+                        }
                         HStack(spacing: 10) {
                             DSButton("Mark paid", systemImage: "checkmark", variant: .secondary, size: .medium, fillsWidth: false) {
                                 share.recordPayment(share.outstanding)

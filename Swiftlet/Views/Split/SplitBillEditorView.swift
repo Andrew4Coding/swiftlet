@@ -20,10 +20,17 @@ struct SplitBillEditorView: View {
     @Query(sort: [SortDescriptor(\Wallet.sortIndex), SortDescriptor(\Wallet.createdAt)]) private var allWallets: [Wallet]
     @Query(sort: \TransactionCategory.sortIndex) private var allCategories: [TransactionCategory]
 
-    @State private var viewModel = SplitBillViewModel()
+    @State private var viewModel: SplitBillViewModel
     @State private var path: [Step] = []
     @State private var photoItem: PhotosPickerItem?
     @State private var isConfirmingDiscard = false
+
+    private let isEditing: Bool
+
+    init(editing bill: SplitBill? = nil) {
+        isEditing = bill != nil
+        _viewModel = State(initialValue: bill.map { SplitBillViewModel(editing: $0) } ?? SplitBillViewModel())
+    }
 
     private var wallets: [Wallet] {
         allWallets.filter { !$0.isArchived }
@@ -35,8 +42,8 @@ struct SplitBillEditorView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            sourceStep
-                .navigationTitle("Split a bill")
+            rootStep
+                .navigationTitle(isEditing ? "Edit split" : "Split a bill")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar(viewModel.scanState == .scanning ? .hidden : .automatic, for: .navigationBar)
                 .toolbar {
@@ -87,6 +94,15 @@ struct SplitBillEditorView: View {
             Button("Keep editing", role: .cancel) {}
         } message: {
             Text("What you entered will be lost.")
+        }
+    }
+
+    @ViewBuilder
+    private var rootStep: some View {
+        if isEditing {
+            SplitItemsStepView(viewModel: viewModel) { path.append(.people) }
+        } else {
+            sourceStep
         }
     }
 
