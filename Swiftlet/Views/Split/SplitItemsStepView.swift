@@ -14,6 +14,7 @@ struct SplitItemsStepView: View {
             Section {
                 TextField("What was it for?", text: $viewModel.title)
                     .textInputAutocapitalization(.sentences)
+                    .accessibilityLabel("Bill name")
                 DatePicker("Date", selection: $viewModel.date, displayedComponents: .date)
             }
 
@@ -57,48 +58,65 @@ struct SplitItemsStepView: View {
                 }
 
                 Section {
-                    HStack {
-                        Text("Bill total").font(.body.weight(.semibold))
-                        Spacer()
-                        Text(viewModel.billTotal.rupiah)
-                            .font(.body.weight(.semibold))
-                            .monospacedDigit()
-                    }
+                    AmountRow(title: "Bill total", value: viewModel.billTotal.rupiah, isEmphasized: true)
                 }
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Review items")
+        .navigationTitle("Items")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            DSButton("Next", action: onNext)
-                .disabled(viewModel.billTotal <= 0)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 8)
-                .background(.bar)
+            VStack(spacing: 6) {
+                if viewModel.billTotal <= 0 {
+                    Text("Enter the bill total or add an item to continue")
+                        .dsTextStyle(.footnote, color: .textSecondary)
+                }
+                DSButton("Next", action: onNext)
+                    .disabled(viewModel.billTotal <= 0)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+            .background(.bar)
         }
         .scrollDismissesKeyboard(.interactively)
+        .keyboardDoneButton()
     }
 
     private func itemRow(_ item: Binding<SplitBillViewModel.DraftItem>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             TextField("Item name", text: item.name)
                 .font(.body.weight(.medium))
-            HStack {
-                Stepper("Qty \(item.wrappedValue.quantity)", value: item.quantity, in: 1 ... 99)
-                    .fixedSize()
-                Spacer()
-                Text("Rp").foregroundStyle(.secondary)
-                TextField("0", text: item.priceText)
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
-                    .monospacedDigit()
-                    .frame(minWidth: 90, maxWidth: 130)
-                    .accessibilityLabel("Price for \(item.wrappedValue.name.isEmpty ? "item" : item.wrappedValue.name)")
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    quantityStepper(item)
+                    Spacer()
+                    priceField(item)
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    quantityStepper(item)
+                    HStack {
+                        Spacer()
+                        priceField(item)
+                    }
+                }
             }
             .font(.subheadline)
         }
         .padding(.vertical, 2)
+    }
+
+    private func quantityStepper(_ item: Binding<SplitBillViewModel.DraftItem>) -> some View {
+        Stepper("Qty \(item.wrappedValue.quantity)", value: item.quantity, in: 1 ... 99)
+            .fixedSize()
+    }
+
+    private func priceField(_ item: Binding<SplitBillViewModel.DraftItem>) -> some View {
+        HStack {
+            Text("Rp").foregroundStyle(.secondary)
+            AmountField(digits: item.priceText)
+                .frame(minWidth: 90, maxWidth: 140)
+                .accessibilityLabel("Price for \(item.wrappedValue.name.isEmpty ? "item" : item.wrappedValue.name)")
+        }
     }
 
     private func amountField(_ title: String, text: Binding<String>) -> some View {
@@ -106,11 +124,9 @@ struct SplitItemsStepView: View {
             Text(title)
             Spacer()
             Text("Rp").foregroundStyle(.secondary)
-            TextField("0", text: text)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .monospacedDigit()
-                .frame(minWidth: 90, maxWidth: 130)
+            AmountField(digits: text)
+                .frame(minWidth: 90, maxWidth: 140)
+                .accessibilityLabel(title)
         }
     }
 

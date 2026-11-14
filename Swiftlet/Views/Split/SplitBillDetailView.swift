@@ -47,14 +47,12 @@ struct SplitBillDetailView: View {
             row("Bill total", bill.total.rupiah)
             row("Your share", bill.myShare.rupiah)
             row("Owed to you", bill.owedByOthers.rupiah)
-            HStack {
-                Text("Still to collect").font(.body.weight(.semibold))
-                Spacer()
-                Text(bill.outstanding.rupiah)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(bill.isFullySettled ? Color.ds(.accent) : Color.ds(.warning))
-                    .monospacedDigit()
-            }
+            AmountRow(
+                title: "Still to collect",
+                value: bill.outstanding.rupiah,
+                isEmphasized: true,
+                valueColor: bill.isFullySettled ? Color.ds(.accent) : Color.ds(.warning)
+            )
         }
     }
 
@@ -150,11 +148,7 @@ struct SplitBillDetailView: View {
     }
 
     private func row(_ title: String, _ value: String) -> some View {
-        HStack {
-            Text(title).foregroundStyle(.secondary)
-            Spacer()
-            Text(value).monospacedDigit()
-        }
+        AmountRow(title: title, value: value)
     }
 
     private func delete() {
@@ -191,10 +185,10 @@ private struct RecordPaymentSheet: View {
 
                 HStack {
                     Text("Rp").foregroundStyle(.secondary)
-                    TextField("0", text: $amountText)
-                        .keyboardType(.numberPad)
+                    AmountField(digits: $amountText)
+                        .multilineTextAlignment(.leading)
                         .focused($isFocused)
-                        .monospacedDigit()
+                        .accessibilityLabel("Payment amount")
                 }
                 .font(.title2.weight(.semibold))
                 .fieldBox()
@@ -219,6 +213,7 @@ private struct RecordPaymentSheet: View {
                 }
             }
             .task { isFocused = true }
+            .keyboardDoneButton()
         }
     }
 }

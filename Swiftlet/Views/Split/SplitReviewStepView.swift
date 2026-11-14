@@ -17,19 +17,9 @@ struct SplitReviewStepView: View {
         List {
             Section {
                 ForEach(Array(viewModel.participants.enumerated()), id: \.element.id) { index, participant in
-                    HStack {
-                        Text(participant.name)
-                        Spacer()
-                        Text((viewModel.split.shares[index]).rupiah)
-                            .font(.body.weight(.semibold))
-                            .monospacedDigit()
-                    }
+                    AmountRow(title: participant.name, value: viewModel.split.shares[index].rupiah, isEmphasized: true)
                 }
-                HStack {
-                    Text("Bill total").foregroundStyle(.secondary)
-                    Spacer()
-                    Text(viewModel.billTotal.rupiah).monospacedDigit().foregroundStyle(.secondary)
-                }
+                AmountRow(title: "Bill total", value: viewModel.billTotal.rupiah, valueColor: .secondary)
             } header: {
                 Text(viewModel.resolvedTitle)
             }

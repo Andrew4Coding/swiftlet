@@ -50,7 +50,7 @@ struct SplitPeopleStepView: View {
             totalsSection
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Who's splitting?")
+        .navigationTitle("People")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 6) {
@@ -65,6 +65,11 @@ struct SplitPeopleStepView: View {
             .background(.bar)
         }
         .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var isDuplicate: Bool {
+        let trimmed = newName.trimmingCharacters(in: .whitespaces)
+        return !trimmed.isEmpty && viewModel.participants.contains { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }
     }
 
     private var blockingMessage: String? {
@@ -90,6 +95,8 @@ struct SplitPeopleStepView: View {
                         .labelStyle(.iconOnly)
                         .foregroundStyle(.secondary)
                         .buttonStyle(.plain)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                     }
                 }
             }
@@ -101,7 +108,12 @@ struct SplitPeopleStepView: View {
                     .submitLabel(.done)
                     .onSubmit(addTyped)
                 Button("Add", action: addTyped)
-                    .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty || isDuplicate)
+            }
+
+            if isDuplicate {
+                Text("\(newName.trimmingCharacters(in: .whitespaces)) is already added")
+                    .dsTextStyle(.footnote, color: .warning)
             }
 
             if !suggestions.isEmpty {
@@ -150,22 +162,18 @@ struct SplitPeopleStepView: View {
     private var totalsSection: some View {
         Section {
             ForEach(Array(viewModel.participants.enumerated()), id: \.element.id) { index, participant in
-                HStack {
-                    Text(participant.name)
-                    Spacer()
-                    Text((viewModel.split.shares[safe: index] ?? 0).rupiah)
-                        .font(.body.weight(.semibold))
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                }
+                AmountRow(
+                    title: participant.name,
+                    value: (viewModel.split.shares[safe: index] ?? 0).rupiah,
+                    isEmphasized: true
+                )
             }
             if viewModel.effectiveMode == .byItems, viewModel.split.unassigned > 0 {
-                HStack {
-                    Label("Left to assign", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(Color.ds(.warning))
-                    Spacer()
-                    Text(viewModel.split.unassigned.rupiah).monospacedDigit()
-                }
+                AmountRow(
+                    title: "Left to assign",
+                    value: viewModel.split.unassigned.rupiah,
+                    valueColor: Color.ds(.warning)
+                )
             }
         } header: {
             Text("Each person pays")

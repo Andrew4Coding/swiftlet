@@ -169,4 +169,38 @@ struct SplitBillViewModelTests {
 
         #expect(viewModel.mismatches.isEmpty)
     }
+
+    @Test func untouchedDraftIsNotDirty() {
+        #expect(!SplitBillViewModel().isDirty)
+    }
+
+    @Test(arguments: ["total", "person", "title", "item", "receipt"])
+    func anyEditMakesDraftDirty(edit: String) {
+        let viewModel = SplitBillViewModel()
+        switch edit {
+        case "total": viewModel.manualTotalText = "1000"
+        case "person": viewModel.addParticipant(name: "Budi")
+        case "title": viewModel.title = "Dinner"
+        case "item": viewModel.addItem()
+        default: viewModel.receiptImageData = Data([1])
+        }
+        #expect(viewModel.isDirty)
+    }
+
+    @Test func cancellingScanClearsReceiptAndState() {
+        let viewModel = SplitBillViewModel()
+        viewModel.receiptImageData = Data([1])
+        viewModel.scanState = .scanning
+        viewModel.cancelScan()
+
+        #expect(viewModel.scanState == .idle)
+        #expect(viewModel.receiptImageData == nil)
+        #expect(!viewModel.isDirty)
+    }
+
+    @Test func amountFieldGroupsDigitsLikeTheRestOfTheApp() {
+        #expect(AmountField.grouped("35000") == "35.000")
+        #expect(AmountField.grouped("1234567") == "1.234.567")
+        #expect(AmountField.grouped("") == "")
+    }
 }

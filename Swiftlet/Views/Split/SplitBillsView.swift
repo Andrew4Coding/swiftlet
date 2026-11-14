@@ -29,11 +29,12 @@ struct SplitBillsView: View {
     private var content: some View {
         Group {
             if bills.isEmpty {
-                ContentUnavailableView {
-                    Label("No splits yet", systemImage: "person.2.fill")
-                } description: {
-                    Text("Split a bill you paid and keep track of who still owes you.")
-                } actions: {
+                VStack(spacing: 16) {
+                    EmptyStateView(
+                        systemImage: "person.2.fill",
+                        title: "No splits yet",
+                        message: "Split a bill you paid and keep track of who still owes you."
+                    )
                     DSButton("Split a bill", fillsWidth: false) { isPresentingEditor = true }
                 }
             } else {
@@ -73,13 +74,7 @@ struct SplitBillsView: View {
                         NavigationLink {
                             SplitPersonView(person: person)
                         } label: {
-                            HStack {
-                                Text(person.name)
-                                Spacer()
-                                Text(person.outstanding.rupiah)
-                                    .font(.body.weight(.semibold))
-                                    .monospacedDigit()
-                            }
+                            AmountRow(title: person.name, value: person.outstanding.rupiah, isEmphasized: true)
                         }
                     }
                 }
@@ -103,29 +98,47 @@ private struct BillRow: View {
     let bill: SplitBill
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(bill.title).font(.body.weight(.medium))
-                Text("\(bill.date.formatted(date: .abbreviated, time: .omitted)) · \((bill.shares ?? []).count) people")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                leading
+                Spacer(minLength: 12)
+                trailing(alignment: .trailing)
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 3) {
-                Text(bill.total.rupiah).font(.subheadline.weight(.semibold)).monospacedDigit()
-                if bill.isFullySettled {
-                    Label("Settled", systemImage: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(Color.ds(.accent))
-                } else {
-                    Text("\(bill.outstanding.rupiah) owed")
-                        .font(.caption)
-                        .foregroundStyle(Color.ds(.warning))
-                        .monospacedDigit()
-                }
+            VStack(alignment: .leading, spacing: 6) {
+                leading
+                trailing(alignment: .leading)
             }
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private var leading: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(bill.title).font(.body.weight(.medium))
+            Text("\(bill.date.formatted(date: .abbreviated, time: .omitted)) · \((bill.shares ?? []).count) people")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func trailing(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 3) {
+            Text(bill.total.rupiah)
+                .font(.subheadline.weight(.semibold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+            if bill.isFullySettled {
+                Label("Settled", systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.ds(.accent))
+            } else {
+                Text("\(bill.outstanding.rupiah) owed")
+                    .font(.caption)
+                    .foregroundStyle(Color.ds(.warning))
+                    .monospacedDigit()
+            }
+        }
     }
 }
 
