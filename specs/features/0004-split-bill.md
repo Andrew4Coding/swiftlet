@@ -90,6 +90,8 @@ Main types:
 - Models `SplitBill`, `SplitItem`, `SplitShare`, `SplitPerson`. `Transaction.splitBill` links the paying transaction, whose amount is the user's share. `Wallet.balance` subtracts what others still owe.
 - `ViewModels/SplitBillViewModel` and `Views/Split/` (editor steps, Splits list, detail with settlement). Entry is the Splits tab in `RootTabView`.
 
+HIG audit (2026-11-14): discarding asks for confirmation on every step and swipe-down is blocked while a draft exists, a scan can be cancelled, amounts are grouped as typed, number pads have a Done button, amount rows reflow at accessibility text sizes, and `DSButton` labels wrap there instead of truncating.
+
 Tests: `SwiftletTests` (new target) covers the calculator, parser, models, view model and a rendered-receipt OCR round trip.
 
 Not yet verified by hand or test (left unticked): AC5 (the mismatch banner is unit tested but was not seen on screen), AC9 (part payment sheet), AC11 (reminder share sheet). OCR was only run on a clean rendered receipt, not on real crumpled photos.
