@@ -100,6 +100,12 @@ final class AmountCalculatorViewModel {
         isEnteringNewNumber = true
     }
 
+    func setAmount(_ value: Int) {
+        clear()
+        currentInput = String(value)
+        isEnteringNewNumber = false
+    }
+
     func clear() {
         currentInput = "0"
         accumulatedValue = 0
