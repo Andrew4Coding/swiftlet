@@ -15,6 +15,13 @@ struct SplitReviewStepView: View {
 
     var body: some View {
         List {
+            if let data = viewModel.receiptImageData {
+                Section {
+                    ReceiptPreviewButton(imageData: data)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+            }
+
             Section {
                 ForEach(Array(viewModel.participants.enumerated()), id: \.element.id) { index, participant in
                     AmountRow(title: participant.name, value: viewModel.split.shares[index].rupiah, isEmphasized: true)
@@ -35,8 +42,6 @@ struct SplitReviewStepView: View {
                         Text(category.name).tag(Optional(category))
                     }
                 }
-            } footer: {
-                Text("Only your share, \(viewModel.myShare.rupiah), counts as spending. The other \((viewModel.billTotal - viewModel.myShare).rupiah) stays owed to you until each person pays.")
             }
         }
         .listStyle(.insetGrouped)
