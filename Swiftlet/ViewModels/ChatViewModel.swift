@@ -18,8 +18,12 @@ struct ChatMessage: Identifiable, Equatable {
     let id = UUID()
     let role: Role
     var text: String
-    var images: [Data] = []
+    var blocks: [ChatBlock] = []
     var state: State = .done
+
+    var copyText: String {
+        ([text] + blocks.compactMap(\.copyText)).filter { !$0.isEmpty }.joined(separator: "\n\n")
+    }
 }
 
 enum ChatAvailability: Equatable {
@@ -123,20 +127,20 @@ final class ChatViewModel {
     }
 
     private func run(prompt: String, replyID: UUID) async {
-        _ = source?.takeImages()
+        _ = source?.takeBlocks()
         do {
             do {
                 try await stream(prompt: prompt, replyID: replyID)
             } catch let error as LanguageModelSession.GenerationError {
                 guard case .exceededContextWindowSize = error else { throw error }
                 restartSession(excluding: replyID, prompt: prompt)
-                _ = source?.takeImages()
+                _ = source?.takeBlocks()
                 update(replyID) { $0.text = "" }
                 try await stream(prompt: prompt, replyID: replyID)
             }
-            let images = source?.takeImages() ?? []
+            let blocks = source?.takeBlocks() ?? []
             update(replyID) {
-                $0.images = images
+                $0.blocks = blocks
                 $0.state = .done
             }
         } catch is CancellationError {

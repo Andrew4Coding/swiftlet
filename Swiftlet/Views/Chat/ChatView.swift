@@ -7,6 +7,7 @@ struct ChatView: View {
 
     @State private var viewModel = ChatViewModel()
     @State private var isConfirmingNewChat = false
+    @State private var openedTransaction: Transaction?
 
     var body: some View {
         NavigationStack {
@@ -40,6 +41,16 @@ struct ChatView: View {
                     ) { viewModel.send() }
                 }
             }
+            .sheet(item: $openedTransaction) { transaction in
+                NavigationStack {
+                    TransactionDetailView(transaction: transaction)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Close", systemImage: "xmark") { openedTransaction = nil }
+                            }
+                        }
+                }
+            }
             .confirmationDialog("Start a new chat?", isPresented: $isConfirmingNewChat, titleVisibility: .visible) {
                 Button("New chat", role: .destructive) { viewModel.newChat() }
             } message: {
@@ -57,8 +68,12 @@ struct ChatView: View {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(viewModel.messages) { message in
-                        ChatBubbleView(message: message, onRetry: viewModel.canRetry ? { viewModel.retry() } : nil)
-                            .id(message.id)
+                        ChatBubbleView(
+                            message: message,
+                            onRetry: viewModel.canRetry ? { viewModel.retry() } : nil,
+                            onOpenTransaction: open
+                        )
+                        .id(message.id)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -72,6 +87,10 @@ struct ChatView: View {
                 scrollToEnd(proxy)
             }
         }
+    }
+
+    private func open(_ id: PersistentIdentifier) {
+        openedTransaction = modelContext.model(for: id) as? Transaction
     }
 
     private func scrollToEnd(_ proxy: ScrollViewProxy) {

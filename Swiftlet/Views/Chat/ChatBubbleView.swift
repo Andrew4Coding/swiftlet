@@ -1,8 +1,10 @@
+import SwiftData
 import SwiftUI
 
 struct ChatBubbleView: View {
     let message: ChatMessage
     var onRetry: (() -> Void)?
+    var onOpenTransaction: (PersistentIdentifier) -> Void = { _ in }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -15,9 +17,16 @@ struct ChatBubbleView: View {
             if isUser { Spacer(minLength: 48) }
             VStack(alignment: .leading, spacing: 8) {
                 bubbleContent
-                ForEach(Array(message.images.enumerated()), id: \.offset) { _, data in
-                    ReceiptPreviewButton(imageData: data)
-                        .frame(maxWidth: 260)
+                    .contextMenu {
+                        Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = message.copyText }
+                    }
+                ForEach(Array(message.blocks.enumerated()), id: \.offset) { _, block in
+                    ChatBlockView(block: block, onOpenTransaction: onOpenTransaction)
+                        .contextMenu {
+                            if let text = block.copyText {
+                                Button("Copy", systemImage: "doc.on.doc") { UIPasteboard.general.string = text }
+                            }
+                        }
                 }
                 if message.state == .failed, let onRetry {
                     Button("Try again", systemImage: "arrow.clockwise", action: onRetry)
@@ -26,7 +35,7 @@ struct ChatBubbleView: View {
                         .frame(minHeight: 44)
                 }
             }
-            if !isUser { Spacer(minLength: 48) }
+            if !isUser { Spacer(minLength: message.blocks.isEmpty ? 48 : 0) }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)
@@ -40,7 +49,7 @@ struct ChatBubbleView: View {
                 .padding(.vertical, 14)
                 .background(Color.ds(.surface), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         } else {
-            Text(message.text)
+            Text(isUser ? AttributedString(message.text) : ChatMarkdown.attributed(message.text))
                 .dsTextStyle(.body, color: isUser ? .onAccent : .textPrimary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
