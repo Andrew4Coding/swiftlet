@@ -22,10 +22,6 @@ struct ReceiptCropView: View {
             }
 
             VStack(spacing: 10) {
-                Text("Drag the corners so only the receipt is inside.")
-                    .dsTextStyle(.footnote, color: .textSecondary)
-                    .multilineTextAlignment(.center)
-
                 if failedToCrop {
                     Text("Couldn't crop that photo. Try again.")
                         .dsTextStyle(.footnote, color: .warning)

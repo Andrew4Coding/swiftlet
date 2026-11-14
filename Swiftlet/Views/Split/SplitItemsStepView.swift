@@ -15,8 +15,6 @@ struct SplitItemsStepView: View {
                 Section {
                     ReceiptPreviewButton(imageData: data)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                } footer: {
-                    Text("Check each item against the receipt. Tap the photo to enlarge it.")
                 }
             }
 
