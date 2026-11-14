@@ -98,15 +98,20 @@ private struct BillRow: View {
     let bill: SplitBill
 
     var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack {
-                leading
-                Spacer(minLength: 12)
-                trailing(alignment: .trailing)
+        HStack(spacing: 12) {
+            if let data = bill.receiptData {
+                ReceiptThumbnail(imageData: data)
             }
-            VStack(alignment: .leading, spacing: 6) {
-                leading
-                trailing(alignment: .leading)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    leading
+                    Spacer(minLength: 12)
+                    trailing(alignment: .trailing)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    leading
+                    trailing(alignment: .leading)
+                }
             }
         }
         .accessibilityElement(children: .combine)

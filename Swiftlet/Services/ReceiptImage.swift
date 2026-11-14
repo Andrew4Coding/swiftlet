@@ -5,6 +5,7 @@
 //  Created by Andrew Devito Aryo on 04/09/26.
 //
 
+import ImageIO
 import UIKit
 
 enum ReceiptImage {
@@ -34,5 +35,15 @@ enum ReceiptImage {
         return UIGraphicsImageRenderer(size: size, format: format).image { _ in
             image.draw(in: CGRect(origin: .zero, size: size))
         }
+    }
+
+    static func thumbnail(from data: Data, maxPixels: Int = 160) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixels,
+        ]
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary).map(UIImage.init(cgImage:))
     }
 }

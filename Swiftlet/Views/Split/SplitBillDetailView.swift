@@ -17,6 +17,12 @@ struct SplitBillDetailView: View {
 
     var body: some View {
         List {
+            if let data = bill.receiptData {
+                Section {
+                    ReceiptPreviewButton(imageData: data)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+            }
             summarySection
             peopleSection
             if !bill.sortedItems.isEmpty { itemsSection }

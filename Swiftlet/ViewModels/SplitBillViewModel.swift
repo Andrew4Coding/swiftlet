@@ -260,6 +260,7 @@ final class SplitBillViewModel {
             discount: extras.discount,
             date: date
         )
+        bill.receiptImageData = receiptImageData
         context.insert(bill)
 
         let transaction = Transaction(

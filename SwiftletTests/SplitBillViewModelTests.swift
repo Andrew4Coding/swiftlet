@@ -203,4 +203,16 @@ struct SplitBillViewModelTests {
         #expect(AmountField.grouped("1234567") == "1.234.567")
         #expect(AmountField.grouped("") == "")
     }
+
+    @Test func savedBillKeepsTheReceiptPhoto() throws {
+        let context = try makeContext()
+        let viewModel = readyViewModel(in: context)
+        viewModel.manualTotalText = "100000"
+        viewModel.addParticipant(name: "Budi")
+        viewModel.receiptImageData = Data([1, 2, 3])
+
+        let bill = try #require(viewModel.save(context: context))
+        #expect(bill.receiptImageData == Data([1, 2, 3]))
+        #expect(bill.receiptData == Data([1, 2, 3]))
+    }
 }
