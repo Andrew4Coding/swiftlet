@@ -1,7 +1,7 @@
 ---
 id: 0006
 title: Manage hub in Account
-status: approved
+status: in-progress
 owner: andrew4coding
 targets: [app]
 created: 2026-11-14
@@ -61,4 +61,6 @@ none
 
 ## Implementation notes
 
-Filled during and after build by the `codebase-sync` skill.
+- `AccountView` Manage section (`ManageRow`), `Views/Category/CategoryListView.swift`; editor moved to `Views/Category/`.
+- Build passes. AC1-AC6 are manual checks not yet run in the simulator, so they stay unticked.
+- Rows open the existing editor sheet instead of a pushed detail screen (see Out of scope).
