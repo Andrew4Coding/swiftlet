@@ -38,10 +38,6 @@ struct HomeView: View {
                     UpcomingRecurringCard(rules: upcomingRecurring)
 
                     CategoryBreakdownChart(slices: viewModel.categoryBreakdown(from: allTransactions))
-
-                    StatsSectionView(transactions: allTransactions, selectedPeriod: $viewModel.selectedPeriod)
-
-                    RecentTransactionsSection(transactions: viewModel.recentTransactions(from: allTransactions))
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
