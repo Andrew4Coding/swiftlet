@@ -13,7 +13,7 @@ enum TransactionCategoryModel {
     }()
 
     static func classify(title: String, among candidates: [String]) -> String? {
-        let text = title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let text = normalize(title)
         guard !text.isEmpty, let model else { return nil }
 
         let hypotheses = model.predictedLabelHypotheses(for: text, maximumCount: candidates.count + 5)
@@ -25,5 +25,12 @@ enum TransactionCategoryModel {
 
         guard let best, best.value >= minimumConfidence else { return nil }
         return allowed[best.key.lowercased()]
+    }
+
+    private static func normalize(_ text: String) -> String {
+        text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
     }
 }
