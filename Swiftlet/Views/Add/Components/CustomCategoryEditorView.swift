@@ -47,30 +47,6 @@ struct CustomCategoryEditorView: View {
                         )
                     }
 
-                    if viewModel.allowsPurpose {
-                        FormField(title: "Purpose") {
-                            MenuField(
-                                placeholder: "Select purpose",
-                                selection: $viewModel.purpose,
-                                options: CategoryPurpose.allCases,
-                                label: \.displayName,
-                                allowsNone: true
-                            )
-                            Text(viewModel.purpose?.detail ?? "Groups spending into the 50/30/20 breakdown.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        FormField(title: "Monthly Budget") {
-                            HStack {
-                                Text("Rp").foregroundStyle(.secondary)
-                                TextField("No limit", text: $viewModel.budgetText)
-                                    .keyboardType(.numberPad)
-                            }
-                            .fieldBox()
-                        }
-                    }
-
                     FormField(title: "Emoji") {
                         emojiRow
                     }
@@ -116,7 +92,7 @@ struct CustomCategoryEditorView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Add a New Category")
                 .font(.title3.weight(.semibold))
-            Text("Swiftlet uses it to understand your spending habits and keep your budgets on track.")
+            Text("Swiftlet uses it to group your spending so you can see where your money goes.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

@@ -11,8 +11,6 @@ import SwiftData
 final class CategoryEditorViewModel {
     var name: String = ""
     var scope: CategoryScope?
-    var purpose: CategoryPurpose?
-    var budgetText: String = ""
 
     /// Set once the user picks by hand; until then the emoji and colour follow the name.
     var pickedEmoji: String?
@@ -36,8 +34,6 @@ final class CategoryEditorViewModel {
         editingCategory = category
         name = category.name
         scope = category.appliesTo
-        purpose = category.purpose
-        budgetText = CurrencyFormatter.plainAmount(category.monthlyBudget)
         pickedEmoji = category.iconType == .emoji ? category.iconValue : nil
         pickedColorHex = category.colorHex.isEmpty ? nil : category.colorHex
     }
@@ -52,11 +48,6 @@ final class CategoryEditorViewModel {
 
     var colorHex: String {
         pickedColorHex ?? suggestedIcon?.colorHex ?? fallbackIcon.colorHex
-    }
-
-    /// Purpose and budget only make sense for categories money is spent in.
-    var allowsPurpose: Bool {
-        scope != .income
     }
 
     var isValid: Bool {
@@ -112,8 +103,6 @@ final class CategoryEditorViewModel {
         category.iconValue = emoji
         category.colorHex = colorHex
         category.appliesTo = scope
-        category.purpose = allowsPurpose ? purpose : nil
-        category.monthlyBudget = allowsPurpose ? CurrencyFormatter.parse(budgetText) ?? 0 : 0
 
         try? context.save()
         return category

@@ -49,11 +49,6 @@ struct AccountView: View {
                 Label("Wallets", systemImage: "wallet.bifold.fill")
             }
             NavigationLink {
-                BudgetsView()
-            } label: {
-                Label("Budgets", systemImage: "target")
-            }
-            NavigationLink {
                 RecurringListView()
             } label: {
                 Label("Recurring & Subscriptions", systemImage: "repeat")

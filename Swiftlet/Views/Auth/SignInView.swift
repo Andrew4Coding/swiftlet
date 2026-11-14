@@ -61,14 +61,14 @@ struct SignInView: View {
         OnboardingSlide(
             id: 1,
             mascot: "Mascot2",
-            headline: "Set your budget,",
-            accent: "stay on track",
+            headline: "Every wallet,",
+            accent: "in one place",
             orbs: [
-                .init(emoji: "🎯", colorHex: "FF2D78", x: -122, y: -96, size: 52),
+                .init(emoji: "💳", colorHex: "FF2D78", x: -122, y: -96, size: 52),
                 .init(emoji: "🛒", colorHex: "34C759", x: 124, y: -80, size: 46),
                 .init(emoji: "☕️", colorHex: "FF9500", x: 128, y: 40, size: 42),
             ],
-            callout: .init(emoji: "🍜", colorHex: "FF3B30", title: "Food budget", detail: "Rp 640rb of 800rb", progress: 0.8, x: -40, y: 122)
+            callout: .init(emoji: "👛", colorHex: "34C759", title: "Cash", detail: "Rp 640.000", x: -40, y: 122)
         ),
         OnboardingSlide(
             id: 2,
