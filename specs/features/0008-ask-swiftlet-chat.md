@@ -1,7 +1,7 @@
 ---
 id: 0008
 title: Ask Swiftlet chat
-status: draft
+status: approved
 owner: andrew4coding
 targets: [app]
 created: 2026-11-14
