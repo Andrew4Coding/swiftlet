@@ -36,6 +36,8 @@ struct SplitPeopleStepView: View {
             }
 
             if viewModel.effectiveMode == .byItems {
+                SplitTextAssignSection(viewModel: viewModel, knownPeople: knownPeople)
+
                 Section {
                     ForEach(viewModel.items) { item in
                         assignmentRow(item)
@@ -43,7 +45,7 @@ struct SplitPeopleStepView: View {
                 } header: {
                     Text("Who had what")
                 } footer: {
-                    Text("An item shared by several people is split evenly between them.")
+                    Text("An item shared by several people is split evenly between them. Tapping a name resets typed quantities on that item.")
                 }
             }
 
@@ -141,6 +143,11 @@ struct SplitPeopleStepView: View {
                 Text(item.price.rupiah).monospacedDigit().foregroundStyle(.secondary)
             }
 
+            if !item.assigneeUnits.isEmpty {
+                Text(unitsSummary(item))
+                    .dsTextStyle(.footnote, color: .textSecondary)
+            }
+
             FlowLayout {
                 ForEach(viewModel.participants) { participant in
                     SelectableChip(
@@ -157,6 +164,14 @@ struct SplitPeopleStepView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private func unitsSummary(_ item: SplitBillViewModel.DraftItem) -> String {
+        let parts = viewModel.participants.compactMap { participant in
+            item.assigneeUnits[participant.id].map { "\(participant.name) ×\($0)" }
+        }
+        let left = item.quantity - item.assigneeUnits.values.reduce(0, +)
+        return (parts + (left > 0 ? ["\(left) left"] : [])).joined(separator: ", ")
     }
 
     private var totalsSection: some View {
