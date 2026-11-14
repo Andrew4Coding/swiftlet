@@ -29,3 +29,7 @@ xcodebuild -project Swiftlet.xcodeproj -scheme Swiftlet -destination 'platform=i
 ```
 
 There are no test targets yet.
+
+## Spec-driven development
+
+`specs/` is the source of truth for what we build and why; read `specs/README.md` first. Write or find a feature spec (`specs/templates/feature.md`) and get it approved before writing code. The `new-feature`, `commit` and `codebase-sync` skills in `.claude/skills/` carry the procedure, and `.claude/rules/commits.md` the commit convention (microcommits). A Stop hook asks for a `codebase-sync` whenever watched source changes; `.claude/sync-state` holds the baseline.
