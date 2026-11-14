@@ -23,6 +23,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `SwiftletMenuBar` also compiles `DesignSystem/Tokens/Colors` because `AppTheme` reads `ColorToken`; keep those files cross-platform.
 - `SwiftletWidgets` compiles a few app files directly (see `project.yml`), so keep those free of app-only dependencies.
 
+A split bill keeps the receipt photo on `SplitBill.receiptImageData` (older bills fall back to the transaction's photo) and shows it through `ReceiptPreviewButton` on the items and people steps and in the detail, with `ReceiptThumbnail` in the Splits list. An item can be shared by units (`SplitItem.assigneeUnits`, parallel to `assigneeKeys`, empty means equal sharing).
+
 A split bill saves the user's share as the paying `Transaction` (so stats stay honest) and keeps the rest as `SplitShare`s owed to them. `Wallet.balance` subtracts the outstanding shares of splits paid from it, so it rises as people settle.
 
 Launch and foreground work runs in `SwiftletApp.refreshBackgroundWork()`: wallet migration, then recurring materialization, then reminder rescheduling.
