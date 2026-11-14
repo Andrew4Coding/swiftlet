@@ -24,11 +24,6 @@ struct AccountView: View {
     @Query private var wallets: [Wallet]
     @Query(sort: \RecurringTransaction.nextDueDate) private var recurringRules: [RecurringTransaction]
 
-    private var nextDueText: String? {
-        guard let next = recurringRules.first(where: \.isActive) else { return nil }
-        return "Next due \(next.nextDueDate.formatted(.dateTime.day().month(.abbreviated)))"
-    }
-
     @ViewBuilder
     private var manageSection: some View {
         Section("Manage") {
@@ -41,12 +36,7 @@ struct AccountView: View {
             NavigationLink {
                 RecurringListView()
             } label: {
-                ManageRow(
-                    title: "Recurring",
-                    systemImage: "repeat",
-                    detail: "\(recurringRules.count)",
-                    subtitle: nextDueText
-                )
+                ManageRow(title: "Recurring", systemImage: "repeat", detail: "\(recurringRules.count)")
             }
 
             NavigationLink {
