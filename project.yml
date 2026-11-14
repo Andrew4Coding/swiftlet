@@ -38,6 +38,8 @@ schemes:
       config: Debug
     test:
       config: Debug
+      targets:
+        - SwiftletTests
     profile:
       config: Release
     analyze:
@@ -252,3 +254,18 @@ targets:
         SWIFT_APPROACHABLE_CONCURRENCY: YES
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_EMIT_LOC_STRINGS: YES
+
+  SwiftletTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: "SwiftletTests"
+    dependencies:
+      - target: "Swiftlet"
+    settings:
+      base:
+        DEVELOPMENT_TEAM: "92QV2QPDKA"
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.andrew4coding.swiftlet.SwiftletTests
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
