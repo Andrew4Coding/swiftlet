@@ -9,6 +9,8 @@ nonisolated enum SplitCalculator {
     struct Item: Equatable {
         var price: Int
         var assignees: [Int]
+        var quantity: Int = 1
+        var units: [Int: Int] = [:]
     }
 
     struct Extras: Equatable {
@@ -65,9 +67,20 @@ nonisolated enum SplitCalculator {
                 unassigned += item.price
                 continue
             }
-            for (offset, share) in equalSplit(total: item.price, count: assignees.count).enumerated() {
-                subtotals[assignees[offset]] += share
+            if item.units.isEmpty {
+                for (offset, share) in equalSplit(total: item.price, count: assignees.count).enumerated() {
+                    subtotals[assignees[offset]] += share
+                }
+                continue
             }
+
+            let weights = assignees.map { max(item.units[$0] ?? 0, 0) }
+            let leftover = max(item.quantity - weights.reduce(0, +), 0)
+            let parts = allocate(total: item.price, weights: weights + [leftover])
+            for (offset, index) in assignees.enumerated() {
+                subtotals[index] += parts[offset]
+            }
+            unassigned += parts[assignees.count]
         }
 
         let assignedTotal = subtotals.reduce(0, +)

@@ -105,4 +105,34 @@ struct SplitCalculatorTests {
         #expect(result.shares.isEmpty)
         #expect(result.unassigned == 10_000)
     }
+
+    @Test func unitClaimsShareTheLinePriceByUnits() {
+        let result = SplitCalculator.itemizedSplit(
+            items: [.init(price: 50_000, assignees: [0, 1], quantity: 5, units: [0: 2, 1: 3])],
+            extras: .init(),
+            participantCount: 2
+        )
+        #expect(result.shares == [20_000, 30_000])
+        #expect(result.unassigned == 0)
+    }
+
+    @Test func unclaimedUnitsStayUnassignedAndTotalsStayExact() {
+        let result = SplitCalculator.itemizedSplit(
+            items: [.init(price: 10_000, assignees: [0, 1], quantity: 3, units: [0: 1, 1: 1])],
+            extras: .init(),
+            participantCount: 2
+        )
+        #expect(result.shares.reduce(0, +) + result.unassigned == 10_000)
+        #expect(result.unassigned == 3_333)
+    }
+
+    @Test func overClaimedUnitsSplitProportionally() {
+        let result = SplitCalculator.itemizedSplit(
+            items: [.init(price: 10_000, assignees: [0, 1], quantity: 2, units: [0: 1, 1: 3])],
+            extras: .init(),
+            participantCount: 2
+        )
+        #expect(result.shares == [2_500, 7_500])
+        #expect(result.unassigned == 0)
+    }
 }

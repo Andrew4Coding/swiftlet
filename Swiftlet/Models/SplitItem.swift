@@ -13,14 +13,16 @@ final class SplitItem {
     var price: Int = 0
     var sortIndex: Int = 0
     var assigneeKeys: [String] = []
+    var assigneeUnits: [Int] = []
 
     var bill: SplitBill?
 
-    init(name: String, quantity: Int = 1, price: Int, sortIndex: Int, assigneeKeys: [String] = []) {
+    init(name: String, quantity: Int = 1, price: Int, sortIndex: Int, assigneeKeys: [String] = [], assigneeUnits: [Int] = []) {
         self.name = name
         self.quantity = quantity
         self.price = price
         self.sortIndex = sortIndex
         self.assigneeKeys = assigneeKeys
+        self.assigneeUnits = assigneeUnits
     }
 }
