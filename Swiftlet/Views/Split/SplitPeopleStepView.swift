@@ -12,6 +12,7 @@ struct SplitPeopleStepView: View {
 
     @Query(sort: \SplitPerson.name) private var knownPeople: [SplitPerson]
     @State private var newName = ""
+    @State private var isPickingContacts = false
     @FocusState private var isNameFocused: Bool
 
     private var suggestions: [SplitPerson] {
@@ -72,6 +73,15 @@ struct SplitPeopleStepView: View {
             .background(Color.ds(.canvas))
         }
         .scrollDismissesKeyboard(.interactively)
+        .sheet(isPresented: $isPickingContacts) {
+            ContactPicker { names in
+                names.forEach { viewModel.addParticipant(name: $0) }
+                isPickingContacts = false
+            } onCancel: {
+                isPickingContacts = false
+            }
+            .ignoresSafeArea()
+        }
     }
 
     private var isDuplicate: Bool {
@@ -116,6 +126,11 @@ struct SplitPeopleStepView: View {
                     .onSubmit(addTyped)
                 Button("Add", action: addTyped)
                     .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty || isDuplicate)
+            }
+
+            Button("Choose from Contacts", systemImage: "person.crop.circle.badge.plus") {
+                isNameFocused = false
+                isPickingContacts = true
             }
 
             if isDuplicate {
