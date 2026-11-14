@@ -1,9 +1,15 @@
 import Foundation
 import SwiftData
 
+nonisolated struct ChatReceiptPhoto: Sendable {
+    var id: PersistentIdentifier
+    var data: Data
+}
+
 @MainActor
 final class ChatDataSource {
     private let context: ModelContext
+    private(set) var pendingImages: [Data] = []
 
     init(context: ModelContext) {
         self.context = context
@@ -17,7 +23,8 @@ final class ChatDataSource {
                 category: transaction.category?.name ?? "Uncategorised",
                 wallet: transaction.walletName,
                 amount: Self.whole(transaction.amount),
-                date: transaction.date
+                date: transaction.date,
+                id: transaction.persistentModelID
             )
         }
 
@@ -46,7 +53,33 @@ final class ChatDataSource {
                 )
             }
 
-        return ChatSnapshot(transactions: transactions, wallets: wallets, debts: debts, recurring: recurring)
+        let categories = ((try? context.fetch(FetchDescriptor<TransactionCategory>())) ?? [])
+            .sorted { ($0.sortIndex, $0.name) < ($1.sortIndex, $1.name) }
+            .map(\.name)
+
+        return ChatSnapshot(
+            transactions: transactions, wallets: wallets, debts: debts, recurring: recurring, categories: categories
+        )
+    }
+
+    func receiptPhotos(for ids: [PersistentIdentifier], limit: Int) -> [ChatReceiptPhoto] {
+        var photos: [ChatReceiptPhoto] = []
+        for id in ids where photos.count < limit {
+            guard let transaction = context.model(for: id) as? Transaction,
+                  let data = transaction.splitBill?.receiptData ?? transaction.receiptImageData
+            else { continue }
+            photos.append(ChatReceiptPhoto(id: id, data: data))
+        }
+        return photos
+    }
+
+    func attach(_ images: [Data]) {
+        pendingImages.append(contentsOf: images)
+    }
+
+    func takeImages() -> [Data] {
+        defer { pendingImages = [] }
+        return pendingImages
     }
 
     private static func whole(_ amount: Decimal) -> Int {

@@ -3,7 +3,7 @@ import FoundationModels
 
 nonisolated struct SplitDebtsTool: Tool {
     let name = "splitDebts"
-    let description = "Who still owes the user money from split bills and how much. Use for questions about unpaid shares or who has not paid back."
+    let description = "Who still owes the user money from split bills, how much and for which bills."
 
     let source: ChatDataSource
 

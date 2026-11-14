@@ -58,14 +58,27 @@ nonisolated enum ChatDates {
     }
 }
 
+nonisolated enum ChatGrouping: String {
+    case category
+    case day
+    case wallet
+
+    init(_ text: String?) {
+        self = ChatGrouping(rawValue: ChatDates.clean(text)?.lowercased() ?? "") ?? .category
+    }
+}
+
 nonisolated struct SpendingSummary: Equatable {
     var total: Int
     var count: Int
-    var byCategory: [CategoryTotal]
+    var grouping: ChatGrouping
+    var groups: [Group]
+    var largest: [ChatTransaction]
 
-    struct CategoryTotal: Equatable {
+    struct Group: Equatable {
         var name: String
         var total: Int
+        var count: Int
     }
 }
 
@@ -77,6 +90,8 @@ nonisolated struct OwedSummary: Equatable {
 
 nonisolated enum ChatQueries {
     static let resultLimit = 10
+    static let receiptSearchLimit = 40
+    static let receiptPhotoLimit = 3
 
     static func transactionType(from text: String?) -> TransactionType? {
         switch ChatDates.clean(text)?.lowercased() {
@@ -92,15 +107,34 @@ nonisolated enum ChatQueries {
         type: TransactionType,
         window: ChatWindow,
         category: String?,
-        wallet: String?
+        wallet: String?,
+        grouping: ChatGrouping = .category,
+        groupLimit: Int = 8,
+        largestLimit: Int = 3
     ) -> SpendingSummary {
         let matching = transactions.filter {
             $0.type == type && window.contains($0.date) && matches($0, category: category, wallet: wallet)
         }
-        let grouped = Dictionary(grouping: matching, by: \.category)
-            .map { SpendingSummary.CategoryTotal(name: $0.key, total: $0.value.reduce(0) { $0 + $1.amount }) }
-            .sorted { ($1.total, $0.name) < ($0.total, $1.name) }
-        return SpendingSummary(total: matching.reduce(0) { $0 + $1.amount }, count: matching.count, byCategory: grouped)
+        let key: (ChatTransaction) -> String = {
+            switch grouping {
+            case .category: $0.category
+            case .wallet: $0.wallet
+            case .day: ChatDates.format($0.date)
+            }
+        }
+        let groups = Dictionary(grouping: matching, by: key)
+            .map { SpendingSummary.Group(name: $0.key, total: $0.value.reduce(0) { $0 + $1.amount }, count: $0.value.count) }
+        let ordered = grouping == .day
+            ? groups.sorted { $0.name > $1.name }
+            : groups.sorted { ($1.total, $0.name) < ($0.total, $1.name) }
+        let largest = matching.sorted { ($0.amount, $1.date) > ($1.amount, $0.date) }.prefix(largestLimit)
+        return SpendingSummary(
+            total: matching.reduce(0) { $0 + $1.amount },
+            count: matching.count,
+            grouping: grouping,
+            groups: Array(ordered.prefix(groupLimit)),
+            largest: Array(largest)
+        )
     }
 
     static func find(

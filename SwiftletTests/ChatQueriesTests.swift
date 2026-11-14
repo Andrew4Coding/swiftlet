@@ -54,13 +54,45 @@ struct ChatQueriesTests {
         let all = ChatQueries.summarize(data, type: .expense, window: window, category: nil, wallet: nil)
         #expect(all.total == 155_000)
         #expect(all.count == 3)
-        #expect(all.byCategory.first == .init(name: "Transport", total: 100_000))
+        #expect(all.groups.first == .init(name: "Transport", total: 100_000, count: 1))
+        #expect(all.largest.first?.title == "Bensin")
+        #expect(all.largest.count == 3)
 
         let food = ChatQueries.summarize(data, type: .expense, window: window, category: "food", wallet: nil)
         #expect(food.total == 55000)
 
         let income = ChatQueries.summarize(data, type: .income, window: window, category: nil, wallet: nil)
         #expect(income.total == 5_000_000)
+    }
+
+    @Test func summarizeGroupsByDayNewestFirst() {
+        let data = [
+            transaction("A", 10000, "2026-10-03"),
+            transaction("B", 20000, "2026-10-03"),
+            transaction("C", 5000, "2026-10-05"),
+        ]
+        let result = ChatQueries.summarize(
+            data, type: .expense, window: ChatWindow(), category: nil, wallet: nil, grouping: .day
+        )
+        #expect(result.groups.map(\.name) == ["2026-10-05", "2026-10-03"])
+        #expect(result.groups.last == .init(name: "2026-10-03", total: 30000, count: 2))
+        let text = ChatReport.spending(result, type: .expense, window: ChatWindow(), category: nil, wallet: nil)
+        #expect(text.contains("By day: 2026-10-05"))
+        #expect(text.contains("Largest: 2026-10-03 B [Food]"))
+    }
+
+    @Test func groupingFallsBackToCategory() {
+        #expect(ChatGrouping("DAY") == .day)
+        #expect(ChatGrouping("wallet") == .wallet)
+        #expect(ChatGrouping("nonsense") == .category)
+        #expect(ChatGrouping(nil) == .category)
+    }
+
+    @Test func appInfoListsCapabilitiesCategoriesAndWallets() {
+        let wallets = [ChatWallet(name: "BCA", balance: 1000)]
+        #expect(ChatReport.info(topic: nil, categories: [], wallets: wallets).contains("I only read your data"))
+        #expect(ChatReport.info(topic: "categories", categories: ["Food", "Transport"], wallets: wallets) == "Categories: Food, Transport.")
+        #expect(ChatReport.info(topic: "wallets", categories: [], wallets: wallets) == "Wallets: BCA.")
     }
 
     @Test func summarizeFiltersByWallet() {
@@ -119,7 +151,7 @@ struct ChatQueriesTests {
     }
 
     @Test func reportsSayWhenNothingMatches() {
-        let empty = SpendingSummary(total: 0, count: 0, byCategory: [])
+        let empty = SpendingSummary(total: 0, count: 0, grouping: .category, groups: [], largest: [])
         #expect(ChatReport.spending(empty, type: .expense, window: ChatWindow(), category: nil, wallet: nil).contains("No expense"))
         #expect(ChatReport.owed([]).contains("Nobody owes"))
     }

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 nonisolated struct ChatTransaction: Sendable, Equatable {
     var type: TransactionType
@@ -7,6 +8,7 @@ nonisolated struct ChatTransaction: Sendable, Equatable {
     var wallet: String
     var amount: Int
     var date: Date
+    var id: PersistentIdentifier? = nil
 }
 
 nonisolated struct ChatWallet: Sendable, Equatable {
@@ -36,4 +38,5 @@ nonisolated struct ChatSnapshot: Sendable {
     var wallets: [ChatWallet] = []
     var debts: [ChatDebt] = []
     var recurring: [ChatRecurring] = []
+    var categories: [String] = []
 }

@@ -17,9 +17,16 @@ nonisolated enum ChatReport {
             return "No \(type.rawValue) transactions found\(scope)."
         }
         var lines = ["Total \(type.rawValue)\(scope): \(rupiah(summary.total)) across \(summary.count) transactions."]
-        if category == nil, summary.byCategory.count > 1 {
-            let top = summary.byCategory.prefix(5).map { "\($0.name) \(rupiah($0.total))" }
-            lines.append("By category: " + top.joined(separator: ", ") + ".")
+        let showsGroups = summary.groups.count > 1 || summary.grouping == .day
+        if showsGroups {
+            let items = summary.groups.map { "\($0.name) \(rupiah($0.total)) (\($0.count))" }
+            lines.append("By \(summary.grouping.rawValue): " + items.joined(separator: "; ") + ".")
+        }
+        if !summary.largest.isEmpty {
+            let items = summary.largest.map {
+                "\(ChatDates.format($0.date)) \($0.title) [\($0.category)] \(rupiah($0.amount))"
+            }
+            lines.append("Largest: " + items.joined(separator: "; ") + ".")
         }
         return lines.joined(separator: "\n")
     }
@@ -33,6 +40,11 @@ nonisolated enum ChatReport {
             lines.append("Showing the newest \(result.rows.count) of \(result.totalMatches) matches.")
         }
         return lines.joined(separator: "\n")
+    }
+
+    static func receipts(_ rows: [ChatTransaction]) -> String {
+        let items = rows.map { "\(ChatDates.format($0.date)) \($0.title) \(rupiah($0.amount))" }
+        return "Attached \(rows.count) receipt photo(s): " + items.joined(separator: "; ") + "."
     }
 
     static func balances(_ wallets: [ChatWallet]) -> String {
@@ -55,6 +67,23 @@ nonisolated enum ChatReport {
             "\(ChatDates.format($0.nextDue)) | \($0.title) | \($0.type.rawValue) \(rupiah($0.amount)) | \($0.frequency) | \($0.wallet)"
         }.joined(separator: "\n")
     }
+
+    static func info(topic: String?, categories: [String], wallets: [ChatWallet]) -> String {
+        switch ChatDates.clean(topic)?.lowercased() {
+        case "categories":
+            return categories.isEmpty ? "There are no categories yet." : "Categories: " + categories.joined(separator: ", ") + "."
+        case "wallets":
+            return wallets.isEmpty ? "There are no wallets yet." : "Wallets: " + wallets.map(\.name).joined(separator: ", ") + "."
+        default:
+            return capabilities
+        }
+    }
+
+    static let capabilities = """
+    I can answer from your data: spending and income totals by category, day or wallet for any period; individual transactions by title, category, wallet, amount or date; wallet balances; who still owes you from split bills; upcoming recurring bills; and show receipt or bill photos.
+    In the app you can: add a transaction (plus button on Home), split a bill by photo or typed text (Splits tab), set up recurring transactions and subscriptions (Account, Recurring), manage wallets and categories (Account), import transactions (Account) and export them (Transactions tab).
+    I only read your data, so I cannot add or change anything for you.
+    """
 
     private static func scopeText(window: ChatWindow, category: String?, wallet: String?) -> String {
         var parts: [String] = []

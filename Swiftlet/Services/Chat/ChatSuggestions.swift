@@ -6,5 +6,7 @@ enum ChatSuggestions {
         "What was my biggest expense this week?",
         "Who still owes me money?",
         "What bills are coming up?",
+        "Show my latest receipt",
+        "What can you do?",
     ]
 }

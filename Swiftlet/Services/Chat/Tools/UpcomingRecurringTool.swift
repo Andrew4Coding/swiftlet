@@ -3,7 +3,7 @@ import FoundationModels
 
 nonisolated struct UpcomingRecurringTool: Tool {
     let name = "upcomingBills"
-    let description = "Next due date of the user's active recurring transactions such as subscriptions and bills, soonest first, at most 10."
+    let description = "Next due dates of recurring transactions such as subscriptions and bills, soonest first."
 
     let source: ChatDataSource
 

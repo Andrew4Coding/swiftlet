@@ -3,7 +3,7 @@ import FoundationModels
 
 nonisolated struct FindTransactionsTool: Tool {
     let name = "findTransactions"
-    let description = "List individual transactions, newest first, at most 10. Filter by title text, category, wallet, amount range or date range. Use to look up a specific purchase or the biggest or latest transactions."
+    let description = "List individual transactions, newest first, at most 10, with date, title, category, wallet and amount. Filter by title text, category, wallet, amount or dates."
 
     let source: ChatDataSource
 

@@ -3,7 +3,7 @@ import FoundationModels
 
 nonisolated struct SpendingSummaryTool: Tool {
     let name = "spendingSummary"
-    let description = "Total money spent or earned in a date range, optionally for one category or wallet, with a breakdown by category. Use for questions about how much was spent or earned."
+    let description = "Total spent or earned in a date range, optionally for one category or wallet, with a breakdown and the 3 largest transactions with date, category and title."
 
     let source: ChatDataSource
 
@@ -19,6 +19,8 @@ nonisolated struct SpendingSummaryTool: Tool {
         var category: String?
         @Guide(description: "Wallet name. Omit for all wallets.")
         var wallet: String?
+        @Guide(description: "How to break the total down: category, day or wallet. Defaults to category. Use day when asked about dates.")
+        var groupBy: String?
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -31,7 +33,12 @@ nonisolated struct SpendingSummaryTool: Tool {
         let type = ChatQueries.transactionType(from: arguments.type) ?? .expense
         let snapshot = await source.snapshot()
         let summary = ChatQueries.summarize(
-            snapshot.transactions, type: type, window: window, category: arguments.category, wallet: arguments.wallet
+            snapshot.transactions,
+            type: type,
+            window: window,
+            category: arguments.category,
+            wallet: arguments.wallet,
+            grouping: ChatGrouping(arguments.groupBy)
         )
         return ChatReport.spending(summary, type: type, window: window, category: arguments.category, wallet: arguments.wallet)
     }

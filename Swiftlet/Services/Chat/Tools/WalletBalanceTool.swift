@@ -3,7 +3,7 @@ import FoundationModels
 
 nonisolated struct WalletBalanceTool: Tool {
     let name = "walletBalances"
-    let description = "Current balance of each wallet, including money still owed by split bill participants. Use for questions about how much money the user has."
+    let description = "Current balance of each wallet. Use for how much money the user has."
 
     let source: ChatDataSource
 
