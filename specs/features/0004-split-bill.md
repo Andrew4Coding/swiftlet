@@ -37,6 +37,9 @@ Let the user split a bill they paid with other people, either equally or by assi
 - [x] **AC12**: Given a photo from the camera or library, when it is chosen, then the user can adjust a crop rectangle (by corner and edge handles, by moving it, or with VoiceOver adjustable actions), reset it, and only the cropped area is scanned and saved as the receipt. (manual in the simulator with the library picker, plus CropGeometryTests; camera path and VoiceOver actions not exercised)
 - [x] **AC13**: Given a receipt photo was scanned, when the user reviews items, then the receipt photo is shown at the top of the screen above the bill name field and can be opened full screen to zoom, so items can be checked against it. (manual in the simulator)
 
+- [x] **AC14**: Given a receipt photo was scanned, when the user is on the People step, then the same tappable receipt preview is shown at the top so who-had-what can be checked against it. (manual build check)
+- [x] **AC15**: Given a saved split with a receipt photo, when the Splits list or the split detail is shown, then the photo appears as a row thumbnail and a tappable preview. The photo is stored on `SplitBill.receiptImageData` (falling back to the paying transaction's photo for older bills). (SplitBillViewModelTests; list and detail not checked on screen)
+
 Calculator, parser and crop geometry criteria (AC1, AC2, AC5, AC6, AC12) are covered by unit tests. The rest are manual checks.
 
 ## UX
@@ -58,7 +61,7 @@ Accessibility notes: amounts never truncate at large Dynamic Type, assignment ch
 
 New models, all CloudKit-safe (defaults, optional relationships with inverses):
 
-- `SplitBill`: title, total, service, tax, discount, date, optional receipt image, one-to-one link to the paying `Transaction`.
+- `SplitBill`: title, total, service, tax, discount, date, optional receipt image (external storage), one-to-one link to the paying `Transaction`.
 - `SplitItem`: name, quantity, price (line total), assignee ids.
 - `SplitShare`: amount, settled amount, whether it is the user's own, optional `SplitPerson`.
 - `SplitPerson`: name only, local, no accounts.
