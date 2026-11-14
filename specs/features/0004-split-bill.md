@@ -34,8 +34,9 @@ Let the user split a bill they paid with other people, either equally or by assi
 - [ ] **AC9**: Given an outstanding share, when the user records a partial or full payment, then the outstanding amount updates and cannot go below zero or above what is owed.
 - [x] **AC10**: Given Apple Intelligence is unavailable, when scanning, then the deterministic parser still produces items without the on-device model. (deterministic parser runs first and alone when the numbers add up (ReceiptScannerTests))
 - [ ] **AC11**: Given outstanding shares, when the user taps remind, then a prefilled message with the amount is offered through the share sheet.
+- [ ] **AC12**: Given a photo from the camera or library, when it is chosen, then the user can adjust a crop rectangle (by corner and edge handles, by moving it, or with VoiceOver adjustable actions), reset it, and only the cropped area is scanned and saved as the receipt.
 
-Calculator and parser criteria (AC1, AC2, AC5, AC6) are covered by unit tests. The rest are manual checks.
+Calculator, parser and crop geometry criteria (AC1, AC2, AC5, AC6, AC12) are covered by unit tests. The rest are manual checks.
 
 ## UX
 
@@ -48,7 +49,7 @@ Calculator and parser criteria (AC1, AC2, AC5, AC6) are covered by unit tests. T
 
 Entry point: a Splits tab between Transactions and Account, which holds "Split a bill".
 
-Flow: 1) scan, pick a photo, or enter manually, 2) review items and extras, 3) choose people and assign items, 4) pick wallet and category, then save.
+Flow: 1) scan, pick a photo (then crop it), or enter manually, 2) review items and extras, 3) choose people and assign items, 4) pick wallet and category, then save.
 
 Accessibility notes: amounts never truncate at large Dynamic Type, assignment chips are at least 44pt and expose selected state to VoiceOver, status is never colour only.
 
