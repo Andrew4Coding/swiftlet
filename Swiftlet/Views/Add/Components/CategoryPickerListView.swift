@@ -101,23 +101,26 @@ struct CategoryPickerListView: View {
                 onDelete(category)
             } label: {
                 Label("Delete", systemImage: "trash")
+                    .labelStyle(.iconOnly)
             }
             .tint(.red)
 
             Button {
                 onEdit(category)
             } label: {
-                Label("Edit", systemImage: "pencil")
+                Image.swipeIcon("pencil")
             }
-            .tint(.blue)
+            .accessibilityLabel("Edit")
+            .tint(Color.ds(.accentFill))
         }
         .swipeActions(edge: .leading) {
             Button {
                 onTogglePin(category)
             } label: {
-                Label(category.isPinned ? "Unpin" : "Pin", systemImage: category.isPinned ? "pin.slash" : "pin")
+                Image.swipeIcon(category.isPinned ? "pin.slash" : "pin")
             }
-            .tint(AppTheme.accent)
+            .accessibilityLabel(category.isPinned ? "Unpin" : "Pin")
+            .tint(Color.ds(.accentFill))
         }
     }
 }

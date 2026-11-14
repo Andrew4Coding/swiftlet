@@ -7,11 +7,12 @@ import SwiftUI
 
 struct TransactionTypePicker: View {
     @Binding var selection: TransactionType
+    var types: [TransactionType] = TransactionType.allCases
     @Namespace private var namespace
 
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(TransactionType.allCases) { type in
+            ForEach(types) { type in
                 let isSelected = selection == type
                 Button {
                     withAnimation(.snappy(duration: 0.25)) {

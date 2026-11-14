@@ -88,14 +88,21 @@ struct SplitBillDetailView: View {
                 .padding(.vertical, 4)
                 .swipeActions(edge: .trailing, allowsFullSwipe: !share.isSettled) {
                     if share.isSettled {
-                        Button("Undo payment", systemImage: "arrow.uturn.backward") { undoPayment(share) }
-                            .tint(.gray)
-                    } else {
-                        Button("Mark paid", systemImage: "checkmark") { markPaid(share) }
-                            .tint(Color.ds(.accent))
-                        ShareLink(item: share.reminderMessage(billTitle: bill.title)) {
-                            Label("Send reminder", systemImage: "paperplane")
+                        Button { undoPayment(share) } label: {
+                            Image(systemName: "arrow.uturn.backward")
                         }
+                        .accessibilityLabel("Undo payment")
+                        .tint(.gray)
+                    } else {
+                        Button { markPaid(share) } label: {
+                            Image.swipeIcon("checkmark")
+                        }
+                        .accessibilityLabel("Mark paid")
+                        .tint(Color.ds(.accentFill))
+                        ShareLink(item: share.reminderMessage(billTitle: bill.title)) {
+                            Image(systemName: "paperplane")
+                        }
+                        .accessibilityLabel("Send reminder")
                         .tint(.gray)
                     }
                 }
