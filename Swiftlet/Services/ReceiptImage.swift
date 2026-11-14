@@ -21,4 +21,18 @@ enum ReceiptImage {
         }
         return normalized.jpegData(compressionQuality: 0.8)
     }
+
+    static func upright(from data: Data, maxPixels: CGFloat = 4000) -> UIImage? {
+        guard let image = UIImage(data: data) else { return nil }
+        let pixelSize = CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale)
+        let longest = max(pixelSize.width, pixelSize.height)
+        let factor = longest > maxPixels ? maxPixels / longest : 1
+        let size = CGSize(width: (pixelSize.width * factor).rounded(), height: (pixelSize.height * factor).rounded())
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: size))
+        }
+    }
 }
