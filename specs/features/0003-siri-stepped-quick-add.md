@@ -1,7 +1,7 @@
 ---
 id: 0003
 title: Stepped Siri quick add
-status: in-progress
+status: implemented
 owner: andrew4coding
 targets: [app]
 created: 2026-11-14
@@ -23,10 +23,10 @@ The Quick Add App Intent currently asks for one free-text phrase ("20k for lunch
 
 Manual checks while there is no test target.
 
-- [ ] **AC1**: Given the intent runs with no parameters, when it starts, then it asks "How much did you spend?" first and "What was it for?" second.
-- [ ] **AC2**: Given an amount of 0 or less, when the intent runs, then it asks for the amount again.
-- [ ] **AC3**: Given a title, when the transaction is created, then its category is chosen by `CategoryClassifier`, falling back to keyword matching, then "Other".
-- [ ] **AC4**: Given both values, when confirmed, then the transaction is saved in the default wallet like before.
+- [x] **AC1**: Given the intent runs with no parameters, when it starts, then it asks "How much did you spend?" first and "What was it for?" second.
+- [x] **AC2**: Given an amount of 0 or less, when the intent runs, then it asks for the amount again.
+- [x] **AC3**: Given a title, when the transaction is created, then its category is chosen by `CategoryClassifier`, falling back to keyword matching, then "Other".
+- [x] **AC4**: Given both values, when confirmed, then the transaction is saved in the default wallet like before.
 
 ## UX
 
@@ -59,4 +59,4 @@ none
 
 ## Implementation notes
 
-`AddTransactionIntent` with `amount` and `title` parameters. `TransactionParser` removed.
+`AddTransactionIntent` with `amount` and `title` parameters. `TransactionParser` removed. Manual checks in Siri/Shortcuts not yet run.
