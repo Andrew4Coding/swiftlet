@@ -53,11 +53,11 @@ Replies are detailed but short: when listing money they give the date, category 
 - [ ] **AC21**: Given the user asks what the assistant can do, or what they can do in the app, when `AppInfoTool` runs, then the reply lists the questions it can answer and the actions available in the app (add a transaction, split a bill, set up recurring, manage wallets and categories, import and export), and says it cannot make changes itself.
 - [ ] **AC22**: Given the user writes in any language, when the assistant replies, then it uses the language of the latest user message; amounts still show as rupiah.
 - [ ] **AC24**: Given the user asks about spending or income grouped into two or more groups, when `SpendingSummaryTool` runs, then a horizontal bar chart of those groups (category, day or wallet) is attached to the reply with each bar's amount labelled.
-- [ ] **AC25**: Given the user touches and holds a message bubble, when the context menu shows, then Copy places the message text on the pasteboard, including any attached table as tab-separated text.
+- [x] **AC25**: Given the user touches and holds a message bubble, when the context menu shows, then Copy places the message text on the pasteboard, including any attached table as tab-separated text.
 - [ ] **AC26**: Given the user asks for transactions, upcoming bills, who owes them or wallet balances, when the tool runs, then the data is attached as a table with a header row, instead of being written out as prose.
-- [ ] **AC27**: Given a table row is a transaction, when the user taps it, then that transaction's detail screen opens in a sheet, and closing it returns to the chat.
-- [ ] **AC28**: Given a date is shown in a reply, table or chart, then it uses the device's locale format (for example 14 Nov 2026), never yyyy-MM-dd. Tool inputs still use yyyy-MM-dd.
-- [ ] **AC29**: Given a reply or table shows an amount, date or title, then it is bold; amounts and dates in the model's text are bolded automatically even if the model forgets.
+- [x] **AC27**: Given a table row is a transaction, when the user taps it, then that transaction's detail screen opens in a sheet, and closing it returns to the chat.
+- [x] **AC28**: Given a date is shown in a reply, table or chart, then it uses the device's locale format (for example 14 Nov 2026), never yyyy-MM-dd. Tool inputs still use yyyy-MM-dd.
+- [x] **AC29**: Given a reply or table shows an amount, date or title, then it is bold; amounts and dates in the model's text are bolded automatically even if the model forgets.
 - [ ] **AC23**: Given the user asks which categories or wallets exist, when `AppInfoTool` runs, then it returns the category and wallet names so later questions can use exact names.
 
 ## UX
@@ -123,5 +123,6 @@ Notes: uses only the system Foundation Models framework, so no new dependency. A
 - Built: `Services/Chat` (snapshots, queries, reports, session factory, seven tools including `ReceiptTool` and `AppInfoTool`), `ViewModels/ChatViewModel`, `Views/Chat` (`ChatView`, `ChatBubbleView`, `ChatInputBar`), Ask tab in `RootTabView`.
 - Tests: `ChatQueriesTests` covers dates, spending sums, search cap and order, debts, upcoming, reports and history summary (the logic behind AC3 to AC8 and AC11's summary).
 - Checked by hand in the simulator: AC1 and AC2 (tab and chips, tapping a chip sends it), AC17 (the suggestion row stays above the input after a message) and the failure bubble with Try again. AC16 holds by inspection: every tool only reads.
-- Not verified: end-to-end answers (AC3 to AC10, AC14, AC15, AC18 to AC23) and the context-overflow retry (AC11). The simulator cannot run generation (`ModelManagerError 1001`), so these need a device with Apple Intelligence. AC12 and AC13 are implemented but not exercised.
+- Chart, tables, copy menu, bold amounts and dates and tapping a transaction row were checked in the simulator with seeded sample replies (a temporary demo, since removed), and unit tests cover blocks, date format and bolding (AC25, AC27 to AC29).
+- Not verified: end-to-end answers (AC3 to AC10, AC14, AC15, AC18 to AC24, AC26) and the context-overflow retry (AC11). The simulator cannot run generation (`ModelManagerError 1001`), so these need a device with Apple Intelligence. AC12 and AC13 are implemented but not exercised.
 - Not done: suggestion chip text and the unavailable-state strings are not yet in `Localizable.xcstrings` because they are passed as plain strings.
