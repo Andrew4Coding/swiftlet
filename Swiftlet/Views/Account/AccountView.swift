@@ -20,6 +20,43 @@ struct AccountView: View {
     @State private var isImportingData = false
     @State private var importSummary: String?
 
+    @Query private var categories: [TransactionCategory]
+    @Query private var wallets: [Wallet]
+    @Query(sort: \RecurringTransaction.nextDueDate) private var recurringRules: [RecurringTransaction]
+
+    private var nextDueText: String? {
+        guard let next = recurringRules.first(where: \.isActive) else { return nil }
+        return "Next due \(next.nextDueDate.formatted(.dateTime.day().month(.abbreviated)))"
+    }
+
+    @ViewBuilder
+    private var manageSection: some View {
+        Section("Manage") {
+            NavigationLink {
+                CategoryListView()
+            } label: {
+                ManageRow(title: "Categories", systemImage: "square.grid.2x2", detail: "\(categories.count)")
+            }
+
+            NavigationLink {
+                RecurringListView()
+            } label: {
+                ManageRow(
+                    title: "Recurring",
+                    systemImage: "repeat",
+                    detail: "\(recurringRules.count)",
+                    subtitle: nextDueText
+                )
+            }
+
+            NavigationLink {
+                WalletsView()
+            } label: {
+                ManageRow(title: "Wallets", systemImage: "wallet.bifold", detail: "\(wallets.filter { !$0.isArchived }.count)")
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -33,6 +70,7 @@ struct AccountView: View {
                 }
 
                 if authService.state != .signedOut {
+                    manageSection
                     dataManagementSection
                 }
             }
@@ -251,4 +289,32 @@ struct AccountView: View {
 #Preview {
     AccountView()
         .environment(AuthenticationService())
+}
+
+private struct ManageRow: View {
+    let title: LocalizedStringKey
+    let systemImage: String
+    let detail: String
+    var subtitle: String?
+
+    var body: some View {
+        HStack {
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } icon: {
+                Image(systemName: systemImage)
+            }
+            Spacer()
+            Text(detail)
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
 }
