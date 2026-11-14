@@ -12,15 +12,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-- `Swiftlet/Models` — SwiftData models: `Transaction` (expense / income / transfer), `TransactionCategory` (emoji + colour; `purposeRaw` and `monthlyBudget` stay in the schema for CloudKit but nothing reads or writes them), `Wallet` (user-defined, balance derived from transactions; icon is an SF Symbol in `symbolName`, with legacy `emoji` mapped through `resolvedSymbolName`), `RecurringTransaction`. `MoneySource` is the legacy fixed wallet list, kept only so `WalletMigrator` can link old transactions.
+- `Swiftlet/Models` — SwiftData models: `Transaction` (expense / income / transfer), `TransactionCategory` (emoji + colour; `purposeRaw` and `monthlyBudget` stay in the schema for CloudKit but nothing reads or writes them), `Wallet` (user-defined, balance derived from transactions; icon is an SF Symbol in `symbolName`, with legacy `emoji` mapped through `resolvedSymbolName`), `RecurringTransaction`, and the split bill models `SplitBill` / `SplitItem` / `SplitShare` / `SplitPerson` (see below). `MoneySource` is the legacy fixed wallet list, kept only so `WalletMigrator` can link old transactions.
 - CloudKit constraints apply to every model: all attributes need defaults or optionals, and every relationship must be optional with an inverse.
 - `Swiftlet/Services` — stateless helpers: category seeding and icon suggestion (Foundation Models, with a keyword fallback), wallet migration, recurring scheduling and reminders, import/export.
+- `Swiftlet/Services/Split` — split bill logic. `SplitCalculator` does integer-only splitting (shares always sum to the total). `ReceiptScanner` reads a photo with Vision and groups text into rows, `ReceiptParser` turns rows into items and extras, `ReceiptModelParser` is the Foundation Models fallback. Keep these `nonisolated`, since the project defaults to MainActor.
 - `Swiftlet/AppIntents` — Siri and Shortcuts. `AddTransactionIntent` asks for the amount, then the title, and infers the category from the title (`TransactionCategoryModel`, the bundled Core ML text classifier, then `CategoryClassifier` (Foundation Models), then keywords, then "Other"); `TransactionEntity`/`CategoryEntity` back the queries.
 - `Swiftlet/ViewModels` — `@Observable` view models.
 - `Swiftlet/Views` — feature folders (Home, Add, Transactions, Wallet, Recurring, Account) plus shared `Components` (`AppTheme`, `FormField`, badges).
 - `Swiftlet/DesignSystem` — mint ink design system matched to the app icon: colour, typography and elevation tokens, `DesignSystemTheme` in the environment (applied at the root with `.designSystemTheme()`), `DSButton`/`DSButtonStyle`, `DSSurface` (`.dsSurface()` replaces the old `.card()`), and Figma-mapped stubs. `AppTheme.accent/income/expense` forward to `ColorToken`. The UI is plain: no gradients or materials; filled mint controls always use ink labels. Emoji are only for category icons; everything else uses SF Symbols.
 - `SwiftletMenuBar` also compiles `DesignSystem/Tokens/Colors` because `AppTheme` reads `ColorToken`; keep those files cross-platform.
 - `SwiftletWidgets` compiles a few app files directly (see `project.yml`), so keep those free of app-only dependencies.
+
+A split bill saves the user's share as the paying `Transaction` (so stats stay honest) and keeps the rest as `SplitShare`s owed to them. `Wallet.balance` subtracts the outstanding shares of splits paid from it, so it rises as people settle.
 
 Launch and foreground work runs in `SwiftletApp.refreshBackgroundWork()`: wallet migration, then recurring materialization, then reminder rescheduling.
 
@@ -31,7 +34,11 @@ xcodegen generate
 xcodebuild -project Swiftlet.xcodeproj -scheme Swiftlet -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 
-There are no test targets yet.
+```bash
+xcodebuild -project Swiftlet.xcodeproj -scheme Swiftlet -destination 'platform=iOS Simulator,id=<iOS 26.5 simulator id>' test -only-testing:SwiftletTests
+```
+
+`SwiftletTests` (Swift Testing) is the only test target. Use a simulator id: the deployment target is iOS 26.5, so a device by name can match an older runtime and fail. Swift 5 language mode is on, so write regex literals as `#/.../#`.
 
 ## Spec-driven development
 
