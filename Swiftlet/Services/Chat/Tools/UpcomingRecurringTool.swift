@@ -15,6 +15,9 @@ nonisolated struct UpcomingRecurringTool: Tool {
 
     func call(arguments: Arguments) async throws -> String {
         let snapshot = await source.snapshot()
-        return ChatReport.upcoming(ChatQueries.upcoming(snapshot.recurring, withinDays: arguments.days))
+        let items = ChatQueries.upcoming(snapshot.recurring, withinDays: arguments.days)
+        guard !items.isEmpty else { return ChatReport.upcoming(items) }
+        await source.attach([ChatBlocks.upcoming(items)])
+        return ChatReport.upcoming(items) + "\n" + ChatReport.attachedHint
     }
 }

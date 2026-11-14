@@ -75,10 +75,12 @@ struct ChatQueriesTests {
             data, type: .expense, window: ChatWindow(), category: nil, wallet: nil, grouping: .day
         )
         #expect(result.groups.map(\.name) == ["2026-10-05", "2026-10-03"])
-        #expect(result.groups.last == .init(name: "2026-10-03", total: 30000, count: 2))
+        #expect(result.groups.last?.total == 30000)
+        #expect(result.groups.last?.count == 2)
         let text = ChatReport.spending(result, type: .expense, window: ChatWindow(), category: nil, wallet: nil)
-        #expect(text.contains("By day: 2026-10-05"))
-        #expect(text.contains("Largest: 2026-10-03 B [Food]"))
+        #expect(text.contains("By day:"))
+        #expect(!text.contains("2026-10"))
+        #expect(text.contains("B [Food]"))
     }
 
     @Test func groupingFallsBackToCategory() {
@@ -169,5 +171,72 @@ struct ChatQueriesTests {
         #expect(ChatQueries.transactionType(from: "Spending") == .expense)
         #expect(ChatQueries.transactionType(from: "income") == .income)
         #expect(ChatQueries.transactionType(from: nil) == nil)
+    }
+
+    @Test func displaysDatesInTheLocaleFormat() {
+        let day = date("2026-11-14")
+        #expect(ChatDates.display(day, calendar: calendar, locale: Locale(identifier: "en_US")) == "Nov 14, 2026")
+        #expect(ChatDates.display(day, calendar: calendar, locale: Locale(identifier: "id_ID")).contains("Nov 2026"))
+        #expect(ChatDates.shortDisplay(day, calendar: calendar, locale: Locale(identifier: "en_US")) == "Nov 14")
+    }
+
+    @Test func chartNeedsTwoGroupsAndPutsDaysInOrder() {
+        let one = SpendingSummary(total: 1, count: 1, grouping: .category, groups: [.init(name: "Food", total: 1, count: 1)], largest: [])
+        #expect(ChatBlocks.spendingChart(one, type: .expense) == nil)
+
+        let data = [
+            transaction("A", 10000, "2026-10-03"),
+            transaction("C", 5000, "2026-10-05"),
+        ]
+        let summary = ChatQueries.summarize(data, type: .expense, window: ChatWindow(), category: nil, wallet: nil, grouping: .day)
+        guard case let .chart(chart)? = ChatBlocks.spendingChart(summary, type: .expense) else {
+            Issue.record("expected a chart")
+            return
+        }
+        #expect(chart.title == "Expense by day")
+        #expect(chart.points.map(\.value) == [10000, 5000])
+        #expect(chart.points.first?.valueText == "Rp 10.000")
+    }
+
+    @Test func transactionTableHasHeaderBoldAmountsAndLinks() {
+        let rows = [transaction("Kopi", 30000, "2026-10-03")]
+        guard case let .table(table)? = ChatBlocks.transactions(rows, title: "Largest") else {
+            Issue.record("expected a table")
+            return
+        }
+        #expect(table.columns.map(\.title) == ["Date", "Title", "Category", "Amount"])
+        #expect(table.columns.last?.isTrailing == true)
+        #expect(table.columns.last?.isBold == true)
+        #expect(table.rows.first?.cells[1] == "Kopi")
+        #expect(table.plainText.hasPrefix("Largest\nDate\tTitle\tCategory\tAmount\n"))
+        #expect(ChatBlocks.transactions([]) == nil)
+    }
+
+    @Test func listTablesAreBuiltFromData() {
+        let recurring = ChatRecurring(title: "Netflix", amount: 54000, type: .expense, frequency: "Monthly", nextDue: date("2026-12-01"), category: "", wallet: "")
+        guard case let .table(upcoming)? = ChatBlocks.upcoming([recurring]) else {
+            Issue.record("expected a table")
+            return
+        }
+        #expect(upcoming.columns.map(\.title) == ["Due", "Bill", "Repeats", "Amount"])
+        #expect(upcoming.rows.first?.cells.last == "Rp 54.000")
+        #expect(ChatBlocks.owed([]) == nil)
+        #expect(ChatBlocks.balances([]) == nil)
+    }
+
+    @Test func markdownBoldsAmountsAndDatesAndKeepsModelBold() {
+        let text = "Paid **Budi** Rp 1.200.000 on 14 Nov 2026 and Nov 14, 2026."
+        let result = ChatMarkdown.attributed(text)
+        let bold = result.runs
+            .filter { $0.inlinePresentationIntent?.contains(.stronglyEmphasized) == true }
+            .map { String(result[$0.range].characters) }
+        #expect(bold == ["Budi", "Rp 1.200.000", "14 Nov 2026", "Nov 14, 2026"])
+        #expect(String(result.characters) == "Paid Budi Rp 1.200.000 on 14 Nov 2026 and Nov 14, 2026.")
+    }
+
+    @Test func copyTextIncludesTables() {
+        var message = ChatMessage(role: .assistant, text: "Here you go")
+        message.blocks = [ChatBlocks.balances([ChatWallet(name: "BCA", balance: 1000)])!]
+        #expect(message.copyText == "Here you go\n\nWallet\tBalance\nBCA\tRp 1.000")
     }
 }

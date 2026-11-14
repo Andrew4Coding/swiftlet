@@ -40,6 +40,12 @@ nonisolated struct SpendingSummaryTool: Tool {
             wallet: arguments.wallet,
             grouping: ChatGrouping(arguments.groupBy)
         )
-        return ChatReport.spending(summary, type: type, window: window, category: arguments.category, wallet: arguments.wallet)
+        let text = ChatReport.spending(summary, type: type, window: window, category: arguments.category, wallet: arguments.wallet)
+        guard summary.count > 0 else { return text }
+        await source.attach([
+            ChatBlocks.spendingChart(summary, type: type),
+            ChatBlocks.transactions(summary.largest, title: "Largest"),
+        ])
+        return text + "\n" + ChatReport.attachedHint
     }
 }

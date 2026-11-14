@@ -9,7 +9,7 @@ nonisolated struct ChatReceiptPhoto: Sendable {
 @MainActor
 final class ChatDataSource {
     private let context: ModelContext
-    private(set) var pendingImages: [Data] = []
+    private(set) var pendingBlocks: [ChatBlock] = []
 
     init(context: ModelContext) {
         self.context = context
@@ -73,13 +73,13 @@ final class ChatDataSource {
         return photos
     }
 
-    func attach(_ images: [Data]) {
-        pendingImages.append(contentsOf: images)
+    func attach(_ blocks: [ChatBlock?]) {
+        pendingBlocks.append(contentsOf: blocks.compactMap { $0 })
     }
 
-    func takeImages() -> [Data] {
-        defer { pendingImages = [] }
-        return pendingImages
+    func takeBlocks() -> [ChatBlock] {
+        defer { pendingBlocks = [] }
+        return pendingBlocks
     }
 
     private static func whole(_ amount: Decimal) -> Int {

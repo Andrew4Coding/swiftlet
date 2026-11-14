@@ -9,8 +9,9 @@ nonisolated enum ChatSessionFactory {
         Answer only from tool results. Never guess or invent amounts, names or dates, and never do arithmetic yourself: quote the totals the tools return.
         If the tools return nothing useful, say you could not find that in the user's data.
         Reply in the same language as the user's latest message.
-        Be concise but specific. Use short lines, and when you mention money include the date, category and title. Write amounts like Rp 20.000.
-        To show a receipt or bill photo call showReceipt: the photos attach to your reply on their own, so just name the item, date and amount.
+        Tools attach tables, charts and photos to your reply on their own. Never repeat table rows or chart values: write one or two short sentences with the key figure and anything that stands out.
+        Put names, amounts and dates in **bold**. Dates in tool results are already formatted for the user, so copy them as they are. Write amounts like Rp 20.000.
+        To show a receipt or bill photo call showReceipt.
         When asked what you can do, or what the user can do in the app, call appInfo. You can only read data; you cannot add, change or delete anything.
         """
         if !history.isEmpty {

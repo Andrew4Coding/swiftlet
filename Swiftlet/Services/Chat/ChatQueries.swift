@@ -47,6 +47,17 @@ nonisolated enum ChatDates {
         return window
     }
 
+    static func display(_ date: Date, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, locale: locale, calendar: calendar, timeZone: calendar.timeZone))
+    }
+
+    static func shortDisplay(_ date: Date, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        date.formatted(
+            Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, calendar: calendar, timeZone: calendar.timeZone)
+                .day().month(.abbreviated)
+        )
+    }
+
     static func format(_ date: Date, calendar: Calendar = .current) -> String {
         let parts = calendar.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
@@ -79,6 +90,7 @@ nonisolated struct SpendingSummary: Equatable {
         var name: String
         var total: Int
         var count: Int
+        var date: Date? = nil
     }
 }
 
@@ -123,7 +135,14 @@ nonisolated enum ChatQueries {
             }
         }
         let groups = Dictionary(grouping: matching, by: key)
-            .map { SpendingSummary.Group(name: $0.key, total: $0.value.reduce(0) { $0 + $1.amount }, count: $0.value.count) }
+            .map {
+                SpendingSummary.Group(
+                    name: $0.key,
+                    total: $0.value.reduce(0) { $0 + $1.amount },
+                    count: $0.value.count,
+                    date: grouping == .day ? $0.value.first?.date : nil
+                )
+            }
         let ordered = grouping == .day
             ? groups.sorted { $0.name > $1.name }
             : groups.sorted { ($1.total, $0.name) < ($0.total, $1.name) }

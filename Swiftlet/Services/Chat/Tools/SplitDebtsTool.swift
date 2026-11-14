@@ -15,6 +15,9 @@ nonisolated struct SplitDebtsTool: Tool {
 
     func call(arguments: Arguments) async throws -> String {
         let snapshot = await source.snapshot()
-        return ChatReport.owed(ChatQueries.owed(snapshot.debts, person: arguments.person))
+        let owed = ChatQueries.owed(snapshot.debts, person: arguments.person)
+        guard !owed.isEmpty else { return ChatReport.owed(owed) }
+        await source.attach([ChatBlocks.owed(owed)])
+        return ChatReport.owed(owed) + "\n" + ChatReport.attachedHint
     }
 }

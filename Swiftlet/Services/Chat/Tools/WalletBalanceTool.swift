@@ -15,6 +15,9 @@ nonisolated struct WalletBalanceTool: Tool {
 
     func call(arguments: Arguments) async throws -> String {
         let snapshot = await source.snapshot()
-        return ChatReport.balances(ChatQueries.wallets(snapshot.wallets, named: arguments.wallet))
+        let wallets = ChatQueries.wallets(snapshot.wallets, named: arguments.wallet)
+        guard !wallets.isEmpty else { return ChatReport.balances(wallets) }
+        await source.attach([ChatBlocks.balances(wallets)])
+        return ChatReport.balances(wallets) + "\n" + ChatReport.attachedHint
     }
 }

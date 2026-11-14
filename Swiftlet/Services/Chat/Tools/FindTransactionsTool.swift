@@ -45,6 +45,8 @@ nonisolated struct FindTransactionsTool: Tool {
             maxAmount: arguments.maxAmount,
             window: window
         )
-        return ChatReport.found(result)
+        guard !result.rows.isEmpty else { return ChatReport.found(result) }
+        await source.attach([ChatBlocks.transactions(result.rows)])
+        return ChatReport.found(result) + "\n" + ChatReport.attachedHint
     }
 }

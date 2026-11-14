@@ -40,8 +40,8 @@ nonisolated struct ReceiptTool: Tool {
         )
         let photos = await source.receiptPhotos(for: matches.rows.compactMap(\.id), limit: ChatQueries.receiptPhotoLimit)
         guard !photos.isEmpty else { return "No receipt photo was found for that." }
-        await source.attach(photos.map(\.data))
         let shown = photos.compactMap { photo in matches.rows.first { $0.id == photo.id } }
+        await source.attach(photos.map { ChatBlock.image($0.data) } + [ChatBlocks.transactions(shown)])
         return ChatReport.receipts(shown)
     }
 }
