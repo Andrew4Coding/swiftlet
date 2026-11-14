@@ -1,47 +1,33 @@
 {
-  "fill" : {
-    "automatic-gradient" : "display-p3:0.88974,0.93288,0.96783,1.00000"
+  "fill": {
+    "automatic-gradient": "srgb:0.06667,0.09412,0.15294,1.00000"
   },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "Image 2.png",
-          "name" : "Image 2",
-          "position" : {
-            "scale" : 0.8,
-            "translation-in-points" : [
-              -47,
-              13
-            ]
-          }
+          "image-name": "2-coins.svg",
+          "name": "2-coins"
         },
         {
-          "image-name" : "Image.png",
-          "name" : "Image",
-          "position" : {
-            "scale" : 0.8,
-            "translation-in-points" : [
-              15,
-              56
-            ]
-          }
+          "image-name": "1-lenses.svg",
+          "name": "1-lenses"
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }
