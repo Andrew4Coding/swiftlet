@@ -54,4 +54,8 @@ final class SplitShare {
         settledAmount = 0
         settledAt = nil
     }
+
+    func reminderMessage(billTitle: String) -> String {
+        "Hi \(name), your share of \(billTitle) is \(CurrencyFormatter.rupiah(Decimal(outstanding))). Thanks!"
+    }
 }

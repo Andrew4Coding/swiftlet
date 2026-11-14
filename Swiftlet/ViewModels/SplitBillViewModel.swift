@@ -213,11 +213,6 @@ final class SplitBillViewModel {
         }
     }
 
-    func message(for share: SplitShare, billTitle: String) -> String {
-        let owed = CurrencyFormatter.rupiah(Decimal(share.outstanding))
-        return "Hi \(share.name), your share of \(billTitle) is \(owed). Thanks!"
-    }
-
     @discardableResult
     func save(context: ModelContext) -> SplitBill? {
         guard validationMessage == nil, let wallet, let category else { return nil }

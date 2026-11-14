@@ -106,3 +106,14 @@ struct SplitModelTests {
         #expect(share.outstanding == 150_000)
     }
 }
+
+extension SplitModelTests {
+    @Test func reminderMessageNamesPersonAndOutstandingAmount() {
+        let share = SplitShare(name: "Budi", amount: 150_000, isMine: false, sortIndex: 1)
+        share.recordPayment(50_000)
+        let message = share.reminderMessage(billTitle: "Dinner")
+        #expect(message.contains("Budi"))
+        #expect(message.contains("Dinner"))
+        #expect(message.contains("100.000"))
+    }
+}
