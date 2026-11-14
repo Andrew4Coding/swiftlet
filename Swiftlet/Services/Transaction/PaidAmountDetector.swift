@@ -4,36 +4,9 @@
 //
 
 import Foundation
-import FoundationModels
-
-@Generable
-private struct ModelPaidAmount {
-    @Guide(description: "True only if the text clearly shows the total amount the customer paid")
-    var found: Bool
-    @Guide(description: "The total amount paid in whole rupiah with no separators, 0 if not found")
-    var amount: Int
-}
 
 nonisolated enum PaidAmountDetector {
     static let maxAmount = 999_999_999_999
-    private static let maxCharacters = 3500
-
-    static func detect(imageData: Data) async -> Int? {
-        guard let lines = try? await ReceiptScanner.recognizeRows(in: imageData), !lines.isEmpty else {
-            return nil
-        }
-        return await detect(lines: lines)
-    }
-
-    static func detect(lines: [String]) async -> Int? {
-        if let modelAmount = await modelAmount(lines: lines),
-           let valid = validated(modelAmount),
-           appearsInText(valid, lines: lines)
-        {
-            return valid
-        }
-        return keywordAmount(lines: lines)
-    }
 
     static func validated(_ amount: Int) -> Int? {
         (1 ... maxAmount).contains(amount) ? amount : nil
@@ -79,23 +52,5 @@ nonisolated enum PaidAmountDetector {
             }
         }
         return nil
-    }
-
-    private static func modelAmount(lines: [String]) async -> Int? {
-        guard case .available = SystemLanguageModel.default.availability else { return nil }
-
-        let text = String(lines.joined(separator: "\n").prefix(maxCharacters))
-        let session = LanguageModelSession(instructions: """
-        You read OCR text from an Indonesian payment proof: a QRIS receipt, bank transfer, \
-        or e-wallet confirmation. Return the final total amount the customer paid.
-        Choose the grand total, never an admin fee, a balance, a change amount, or a reference number.
-        Copy the number exactly as printed, converting formats such as 150.000 or Rp 150.000,00 to 150000.
-        If no paid total is clearly printed, set found to false.
-        """)
-
-        guard let result = try? await session.respond(to: text, generating: ModelPaidAmount.self).content,
-              result.found
-        else { return nil }
-        return result.amount
     }
 }

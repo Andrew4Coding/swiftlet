@@ -95,7 +95,7 @@ struct AddTransactionView: View {
                 }
             }
             .task { viewModel.assignDefaultWallets(context: modelContext) }
-            .task { await detectSharedAmount() }
+            .task { await detectFromSharedImage() }
             .sheet(item: $categoryEditor) { target in
                 CustomCategoryEditorView(
                     editing: target.category,
@@ -130,15 +130,17 @@ struct AddTransactionView: View {
         .presentationDragIndicator(.visible)
     }
 
-    private func detectSharedAmount() async {
+    private func detectFromSharedImage() async {
         guard viewModel.shouldDetectAmount, let data = viewModel.receiptImageData else { return }
         viewModel.shouldDetectAmount = false
         viewModel.isDetectingAmount = true
-        let amount = await PaidAmountDetector.detect(imageData: data)
+        let proof = await PaymentProofReader.read(imageData: data)
         viewModel.isDetectingAmount = false
-        guard let amount, calculator.finalValue == 0 else { return }
-        calculator.setAmount(amount)
-        viewModel.detectedAmount = amount
+        if let amount = proof.amount, calculator.finalValue == 0 {
+            calculator.setAmount(amount)
+            viewModel.detectedAmount = amount
+        }
+        await viewModel.applyDetectedCategory(merchant: proof.merchant, from: allCategories)
     }
 
     private var isAmountDetected: Bool {
