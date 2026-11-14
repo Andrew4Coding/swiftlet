@@ -61,53 +61,66 @@ struct SplitBillDetailView: View {
     private var peopleSection: some View {
         Section("People") {
             ForEach(bill.othersShares) { share in
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text(share.name).font(.body.weight(.medium))
                         Spacer()
                         Text(share.amount.rupiah).monospacedDigit()
                     }
-                    HStack {
-                        if share.isSettled {
-                            Label("Paid", systemImage: "checkmark.circle.fill")
+
+                    if share.isSettled {
+                        HStack {
+                            Label("Paid in full", systemImage: "checkmark.circle.fill")
+                                .font(.subheadline)
                                 .foregroundStyle(Color.ds(.accent))
-                        } else {
-                            Text(share.settledAmount > 0 ? "\(share.outstanding.rupiah) left" : "Owes \(share.outstanding.rupiah)")
-                                .foregroundStyle(Color.ds(.warning))
+                            Spacer()
+                            moreMenu(for: share)
                         }
-                        Spacer()
-                        actions(for: share)
+                    } else {
+                        Text(share.settledAmount > 0 ? "\(share.outstanding.rupiah) left to pay" : "Owes \(share.outstanding.rupiah)")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.ds(.warning))
+                        HStack(spacing: 10) {
+                            DSButton("Mark paid", systemImage: "checkmark", variant: .secondary, size: .medium, fillsWidth: false) {
+                                share.recordPayment(share.outstanding)
+                                try? modelContext.save()
+                            }
+                            moreMenu(for: share)
+                        }
                     }
-                    .font(.subheadline)
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, 4)
             }
         }
     }
 
-    @ViewBuilder
-    private func actions(for share: SplitShare) -> some View {
-        if share.isSettled {
-            Button("Undo") {
-                share.undoSettlement()
-                try? modelContext.save()
-            }
-            .buttonStyle(.borderless)
-        } else {
-            HStack(spacing: 16) {
-                ShareLink(item: share.reminderMessage(billTitle: bill.title)) {
-                    Label("Remind", systemImage: "paperplane")
-                }
-                Button("Payment") { paymentTarget = share }
-                Button("Paid", systemImage: "checkmark") {
-                    share.recordPayment(share.outstanding)
+    private func moreMenu(for share: SplitShare) -> some View {
+        Menu {
+            if share.isSettled {
+                Button("Undo payment", systemImage: "arrow.uturn.backward") {
+                    share.undoSettlement()
                     try? modelContext.save()
                 }
-                .labelStyle(.titleOnly)
-                .fontWeight(.semibold)
+            } else {
+                ShareLink(item: share.reminderMessage(billTitle: bill.title)) {
+                    Label("Send reminder", systemImage: "paperplane")
+                }
+                Button("Record part payment", systemImage: "banknote") { paymentTarget = share }
+                if share.settledAmount > 0 {
+                    Button("Undo payments", systemImage: "arrow.uturn.backward") {
+                        share.undoSettlement()
+                        try? modelContext.save()
+                    }
+                }
             }
-            .buttonStyle(.borderless)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.body.weight(.semibold))
+                .frame(width: 44, height: 44)
+                .background(Color.ds(.surfaceMuted), in: Circle())
+                .foregroundStyle(Color.ds(.textPrimary))
         }
+        .accessibilityLabel("More actions for \(share.name)")
     }
 
     private var itemsSection: some View {
