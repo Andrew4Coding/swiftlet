@@ -46,6 +46,7 @@ Category and speed:
 - [x] **AC13**: Given the proof shows a labelled total and a labelled merchant, when detection runs, then no Foundation Models call is made.
 - [x] **AC14**: Given a rendered proof image, when the full pipeline runs (OCR, amount, merchant, category), then amount and category match the image. (test, with the model unavailable)
 - [x] **AC15**: A model-supplied merchant is discarded unless it appears in the OCR text.
+- [ ] **AC16**: Given detection (OCR plus any model fallback) takes more than 2 seconds, when the limit passes, then the app stops waiting, shows "Amount not detected" under the amount, leaves the amount and category untouched, and ignores any result that arrives later. The caption disappears once the user enters an amount.
 
 ## UX
 
@@ -54,7 +55,8 @@ Category and speed:
 | Empty | Rp0 as today |
 | Loading | Subtle inline progress text "Reading amount…" under the amount, keypad enabled |
 | Content | Amount filled, caption "Detected from image" |
-| Error | Nothing: falls back to empty amount |
+| Nothing found | Nothing: falls back to empty amount |
+| Timed out (over 2 s) | Caption "Amount not detected"; keypad stays usable |
 
 Design link: none (reuses the existing amount display).
 
