@@ -66,6 +66,52 @@ final class SplitBillViewModel {
     var category: TransactionCategory?
     var scanState: ScanState = .idle
     private var scanTask: Task<Void, Never>?
+    private(set) var editingBill: SplitBill?
+
+    init() {}
+
+    init(editing bill: SplitBill) {
+        editingBill = bill
+        title = bill.title
+        date = bill.date
+        receiptImageData = bill.receiptData
+        serviceText = bill.service > 0 ? String(bill.service) : ""
+        taxText = bill.tax > 0 ? String(bill.tax) : ""
+        discountText = bill.discount > 0 ? String(bill.discount) : ""
+        wallet = bill.transaction?.wallet
+        category = bill.transaction?.category
+
+        participants = bill.sortedShares.map { share in
+            Participant(
+                id: UUID(uuidString: share.key) ?? UUID(),
+                name: share.name,
+                person: share.person,
+                isMe: share.isMine
+            )
+        }
+        if !participants.contains(where: \.isMe) {
+            participants.insert(Participant(id: UUID(), name: "You", isMe: true), at: 0)
+        }
+
+        items = bill.sortedItems.map { stored in
+            var item = DraftItem()
+            item.name = stored.name
+            item.quantity = stored.quantity
+            item.priceText = String(stored.price)
+            item.assigneeIDs = Set(stored.assigneeKeys.compactMap(UUID.init(uuidString:)))
+            if stored.assigneeUnits.count == stored.assigneeKeys.count {
+                for (key, units) in zip(stored.assigneeKeys, stored.assigneeUnits) {
+                    if let id = UUID(uuidString: key) { item.assigneeUnits[id] = units }
+                }
+            }
+            return item
+        }
+        if items.isEmpty {
+            manualTotalText = String(bill.total)
+        } else if items.contains(where: { !$0.assigneeIDs.isEmpty }) {
+            mode = .byItems
+        }
+    }
 
     static func wholeRupiah(_ text: String) -> Int {
         guard let value = CurrencyFormatter.parse(text) else { return 0 }
@@ -252,29 +298,52 @@ final class SplitBillViewModel {
         let existingPeople = (try? context.fetch(FetchDescriptor<SplitPerson>())) ?? []
         let extras = extras
 
-        let bill = SplitBill(
-            title: resolvedTitle,
-            total: billTotal,
-            service: extras.service,
-            tax: extras.tax,
-            discount: extras.discount,
-            date: date
-        )
-        bill.receiptImageData = receiptImageData
-        context.insert(bill)
+        let bill: SplitBill
+        if let editingBill {
+            bill = editingBill
+            bill.title = resolvedTitle
+            bill.total = billTotal
+            bill.service = extras.service
+            bill.tax = extras.tax
+            bill.discount = extras.discount
+            bill.date = date
+            bill.receiptImageData = receiptImageData
+            if let transaction = bill.transaction {
+                transaction.title = resolvedTitle
+                transaction.amount = Decimal(result.shares[0])
+                transaction.date = date
+                transaction.category = category
+                transaction.wallet = wallet
+                transaction.receiptImageData = receiptImageData
+            }
+            for item in bill.items ?? [] { context.delete(item) }
+            let keptKeys = Set(participants.map { $0.id.uuidString })
+            for share in bill.shares ?? [] where !keptKeys.contains(share.key) { context.delete(share) }
+        } else {
+            bill = SplitBill(
+                title: resolvedTitle,
+                total: billTotal,
+                service: extras.service,
+                tax: extras.tax,
+                discount: extras.discount,
+                date: date
+            )
+            bill.receiptImageData = receiptImageData
+            context.insert(bill)
 
-        let transaction = Transaction(
-            type: .expense,
-            title: resolvedTitle,
-            amount: Decimal(result.shares[0]),
-            source: .bca,
-            date: date,
-            category: category,
-            receiptImageData: receiptImageData
-        )
-        transaction.wallet = wallet
-        context.insert(transaction)
-        bill.transaction = transaction
+            let transaction = Transaction(
+                type: .expense,
+                title: resolvedTitle,
+                amount: Decimal(result.shares[0]),
+                source: .bca,
+                date: date,
+                category: category,
+                receiptImageData: receiptImageData
+            )
+            transaction.wallet = wallet
+            context.insert(transaction)
+            bill.transaction = transaction
+        }
 
         for (index, participant) in participants.enumerated() {
             let person: SplitPerson? = if participant.isMe {
@@ -287,6 +356,18 @@ final class SplitBillViewModel {
                 SplitPerson(name: participant.name)
             }
             if let person, person.modelContext == nil { context.insert(person) }
+
+            if let existing = bill.shares?.first(where: { $0.key == participant.id.uuidString }) {
+                existing.name = participant.name
+                existing.amount = result.shares[index]
+                existing.isMine = participant.isMe
+                existing.sortIndex = index
+                existing.person = person
+                if !participant.isMe {
+                    existing.settledAt = existing.outstanding == 0 ? (existing.settledAt ?? .now) : nil
+                }
+                continue
+            }
 
             let share = SplitShare(
                 key: participant.id.uuidString,

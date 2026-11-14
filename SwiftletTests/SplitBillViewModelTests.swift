@@ -215,4 +215,30 @@ struct SplitBillViewModelTests {
         #expect(bill.receiptImageData == Data([1, 2, 3]))
         #expect(bill.receiptData == Data([1, 2, 3]))
     }
+
+    @Test func editingKeepsPaymentsAndUpdatesTheBill() throws {
+        let context = try makeContext()
+        let viewModel = readyViewModel(in: context)
+        viewModel.addParticipant(name: "Budi")
+        viewModel.addItem()
+        viewModel.items[0].name = "Nasi"
+        viewModel.items[0].priceText = "100000"
+        viewModel.mode = .byItems
+        viewModel.assignEveryone(to: viewModel.items[0].id)
+        let bill = try #require(viewModel.save(context: context))
+        bill.othersShares[0].recordPayment(20_000)
+
+        let editor = SplitBillViewModel(editing: bill)
+        #expect(editor.participants.count == 2)
+        #expect(editor.effectiveMode == .byItems)
+        editor.items[0].priceText = "80000"
+        #expect(editor.save(context: context) === bill)
+
+        #expect(bill.total == 80_000)
+        #expect(bill.sortedItems.count == 1)
+        #expect(bill.sortedShares.count == 2)
+        #expect(bill.othersShares[0].amount == 40_000)
+        #expect(bill.othersShares[0].settledAmount == 20_000)
+        #expect(bill.transaction?.amount == 40_000)
+    }
 }
