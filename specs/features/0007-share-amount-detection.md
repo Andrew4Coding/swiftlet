@@ -1,7 +1,7 @@
 ---
 id: 0007
 title: Detect paid amount from shared images
-status: approved
+status: in-progress
 owner: andrew4coding
 targets: [app, share-extension]
 created: 2026-11-14
@@ -30,9 +30,9 @@ Detection runs in the host app, not the share extension: extensions have a tight
 - [ ] **AC4**: Given the user has already typed an amount before detection finishes, when detection completes, then the typed amount is not overwritten.
 - [ ] **AC5**: Given detection finds nothing, the model is unavailable, or OCR finds no text, when it completes, then the amount stays empty with no error shown.
 - [ ] **AC6**: Given the amount was auto-filled, when the user views the amount, then a small "Detected from image" label shows beneath it and disappears once the user edits the amount.
-- [ ] **AC7**: Given Foundation Models is unavailable, when an image is shared, then a deterministic fallback picks the amount from a line labelled total/jumlah/nominal/total bayar, else leaves it empty.
+- [x] **AC7**: Given Foundation Models is unavailable, when an image is shared, then a deterministic fallback picks the amount from a line labelled total/jumlah/nominal/total bayar, else leaves it empty.
 - [ ] **AC8**: Given the image is attached from the photo picker or camera inside Add Transaction (not shared), then no detection runs (out of scope).
-- [ ] **AC9**: Detected values are validated: must be an integer from 1 to 999,999,999,999; anything else is discarded.
+- [x] **AC9**: Detected values are validated: must be an integer from 1 to 999,999,999,999; anything else is discarded.
 
 ## UX
 
@@ -71,4 +71,6 @@ none. No schema change. `AmountDetector` result is held in view state only.
 
 ## Implementation notes
 
-Planned: `Services/Transaction/PaidAmountDetector.swift` (`nonisolated` enum: `detect(imageData:) async -> Int?`, Foundation Models `@Generable` result plus a deterministic keyword fallback), a `detectAmount` hook on `AddTransactionViewModel` called from `AddTransactionView.init(receiptImageData:)`'s `.task`, and unit tests for the fallback parser and validation.
+Built: `PaidAmountDetector` (tests in `PaidAmountDetectorTests`: parsing, keyword fallback, range validation, model answer must appear in text). AC7 and AC9 are covered by those tests. AC1 to AC6 and AC8 are UI or on-device model behaviour and still need a manual check on a device with Apple Intelligence, so the spec stays in-progress.
+
+Original plan: `Services/Transaction/PaidAmountDetector.swift` (`nonisolated` enum: `detect(imageData:) async -> Int?`, Foundation Models `@Generable` result plus a deterministic keyword fallback), a `detectAmount` hook on `AddTransactionViewModel` called from `AddTransactionView.init(receiptImageData:)`'s `.task`, and unit tests for the fallback parser and validation.
