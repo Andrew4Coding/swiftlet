@@ -9,7 +9,9 @@ import SwiftData
 @Model
 final class Wallet {
     var name: String = ""
+    /// Legacy icon from before wallets used SF Symbols; read only to pick a fallback symbol.
     var emoji: String = "👛"
+    var symbolName: String = ""
     var colorHex: String = "0A84FF"
     /// Asset-catalog logo for wallets migrated from a built-in `MoneySource`; empty for user-made ones.
     var logoAsset: String = ""
@@ -31,6 +33,7 @@ final class Wallet {
     init(
         name: String,
         emoji: String = "👛",
+        symbolName: String = "",
         colorHex: String = "0A84FF",
         logoAsset: String = "",
         initialBalance: Decimal = 0,
@@ -40,12 +43,42 @@ final class Wallet {
     ) {
         self.name = name
         self.emoji = emoji
+        self.symbolName = symbolName
         self.colorHex = colorHex
         self.logoAsset = logoAsset
         self.initialBalance = initialBalance
         self.sortIndex = sortIndex
         self.legacySourceRaw = legacySourceRaw
         self.createdAt = createdAt
+    }
+
+    var resolvedSymbolName: String {
+        symbolName.isEmpty ? Self.symbol(forLegacyEmoji: emoji) : symbolName
+    }
+
+    static let defaultSymbolName = "wallet.bifold.fill"
+
+    static let symbolChoices: [String] = [
+        "wallet.bifold.fill", "banknote.fill", "creditcard.fill", "building.columns.fill", "iphone",
+        "qrcode", "dollarsign.circle.fill", "chart.line.uptrend.xyaxis", "briefcase.fill", "house.fill",
+        "giftcard.fill", "bag.fill", "cart.fill", "car.fill", "airplane",
+        "person.2.fill", "graduationcap.fill", "heart.fill", "star.fill", "lock.fill",
+    ]
+
+    static func symbol(forLegacyEmoji emoji: String) -> String {
+        switch emoji {
+        case "💵", "💴", "💶", "💷", "💰", "💸": "banknote.fill"
+        case "💳": "creditcard.fill"
+        case "🏦", "🏛️": "building.columns.fill"
+        case "📱", "📲": "iphone"
+        case "🔳": "qrcode"
+        case "🐷", "🪙": "dollarsign.circle.fill"
+        case "📈": "chart.line.uptrend.xyaxis"
+        case "💼": "briefcase.fill"
+        case "🏠", "🏡": "house.fill"
+        case "🎁": "giftcard.fill"
+        default: defaultSymbolName
+        }
     }
 
     var balance: Decimal {

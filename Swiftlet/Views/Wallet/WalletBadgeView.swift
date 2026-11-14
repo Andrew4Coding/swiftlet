@@ -21,8 +21,8 @@ struct WalletBadgeView: View {
                 .accessibilityHidden(true)
         } else {
             IconBadge(
-                iconType: .emoji,
-                iconValue: wallet?.emoji ?? "👛",
+                iconType: .system,
+                iconValue: wallet?.resolvedSymbolName ?? Wallet.defaultSymbolName,
                 colorHex: wallet?.colorHex ?? "8E8E93",
                 size: size
             )
@@ -53,7 +53,7 @@ struct WalletChip: View {
 #Preview {
     HStack {
         WalletBadgeView(wallet: Wallet(name: "BCA", colorHex: "0066AE", logoAsset: "bca"))
-        WalletBadgeView(wallet: Wallet(name: "Cash", emoji: "💵", colorHex: "34C759"))
+        WalletBadgeView(wallet: Wallet(name: "Cash", symbolName: "banknote.fill", colorHex: "34C759"))
         WalletBadgeView(wallet: nil)
     }
     .padding()

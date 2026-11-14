@@ -14,7 +14,7 @@ struct WalletEditorView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var name: String
-    @State private var emoji: String
+    @State private var symbolName: String
     @State private var colorHex: String
     @State private var initialBalanceText: String
     @FocusState private var focusedField: Field?
@@ -27,7 +27,7 @@ struct WalletEditorView: View {
         self.wallet = wallet
         self.onSaved = onSaved
         _name = State(initialValue: wallet?.name ?? "")
-        _emoji = State(initialValue: wallet?.emoji ?? "👛")
+        _symbolName = State(initialValue: wallet?.resolvedSymbolName ?? Wallet.defaultSymbolName)
         _colorHex = State(initialValue: wallet?.colorHex ?? AppTheme.palette[5])
         _initialBalanceText = State(initialValue: CurrencyFormatter.plainAmount(wallet?.initialBalance ?? 0))
     }
@@ -64,21 +64,8 @@ struct WalletEditorView: View {
                     }
 
                     if wallet?.logoAsset.isEmpty ?? true {
-                        FormField(title: "Emoji") {
-                            NavigationLink {
-                                EmojiPickerView(selection: $emoji, tintHex: colorHex)
-                            } label: {
-                                HStack {
-                                    Text(emoji).font(.title2)
-                                    Text("Change emoji")
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.footnote.weight(.semibold))
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .fieldBox()
-                            }
-                            .buttonStyle(.plain)
+                        FormField(title: "Icon") {
+                            WalletSymbolGrid(selection: $symbolName, tintHex: colorHex)
                         }
                     }
 
@@ -114,7 +101,7 @@ struct WalletEditorView: View {
             if let wallet, !wallet.logoAsset.isEmpty {
                 WalletBadgeView(wallet: wallet, size: 72)
             } else {
-                IconBadge(iconType: .emoji, iconValue: emoji, colorHex: colorHex, size: 72)
+                IconBadge(iconType: .system, iconValue: symbolName, colorHex: colorHex, size: 72)
             }
             Text(name.isEmpty ? "Wallet" : name)
                 .font(.headline)
@@ -134,13 +121,45 @@ struct WalletEditorView: View {
             modelContext.insert(target)
         }
         target.name = trimmed
-        target.emoji = emoji
+        target.symbolName = symbolName
         target.colorHex = colorHex
         target.initialBalance = balance
         try? modelContext.save()
 
         onSaved(target)
         dismiss()
+    }
+}
+
+private struct WalletSymbolGrid: View {
+    @Binding var selection: String
+    let tintHex: String
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 5)
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 10) {
+            ForEach(Wallet.symbolChoices, id: \.self) { symbol in
+                let isSelected = symbol == selection
+                Button {
+                    selection = symbol
+                } label: {
+                    Image(systemName: symbol)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(isSelected ? .white : Color(hex: tintHex))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            isSelected ? Color(hex: tintHex) : Color(hex: tintHex).opacity(0.14),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(symbol.replacingOccurrences(of: ".fill", with: "").replacingOccurrences(of: ".", with: " "))
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
+        }
+        .sensoryFeedback(.selection, trigger: selection)
     }
 }
 
