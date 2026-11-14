@@ -62,6 +62,7 @@ final class SplitBillViewModel {
     var wallet: Wallet?
     var category: TransactionCategory?
     var scanState: ScanState = .idle
+    private var scanTask: Task<Void, Never>?
 
     static func wholeRupiah(_ text: String) -> Int {
         guard let value = CurrencyFormatter.parse(text) else { return 0 }
@@ -127,6 +128,24 @@ final class SplitBillViewModel {
     }
 
     var canSave: Bool { validationMessage == nil }
+
+    var isDirty: Bool {
+        receiptImageData != nil || !items.isEmpty || !manualTotalText.isEmpty
+            || participants.count > 1 || !title.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    func cancelScan() {
+        scanTask?.cancel()
+        scanTask = nil
+        receiptImageData = nil
+        scanState = .idle
+    }
+
+    func startScan(imageData: Data) async {
+        let task = Task { await scan(imageData: imageData) }
+        scanTask = task
+        await task.value
+    }
 
     var resolvedTitle: String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -203,12 +222,14 @@ final class SplitBillViewModel {
         scanState = .scanning
         do {
             let outcome = try await ReceiptScanner.scan(imageData: imageData)
+            guard !Task.isCancelled else { return }
             if outcome.receipt.items.isEmpty, outcome.receipt.total == nil {
                 scanState = .failed("Couldn't find any items on that photo. You can enter them yourself.")
             } else {
                 apply(outcome)
             }
         } catch {
+            guard !Task.isCancelled else { return }
             scanState = .failed("Couldn't read that photo. You can enter the items yourself.")
         }
     }

@@ -23,7 +23,7 @@ struct SplitBillEditorView: View {
     @State private var path: [Step] = []
     @State private var photoItem: PhotosPickerItem?
     @State private var isPresentingCamera = false
-    @State private var scanTask: Task<Void, Never>?
+    @State private var isConfirmingDiscard = false
 
     private var wallets: [Wallet] {
         allWallets.filter { !$0.isArchived }
@@ -40,15 +40,17 @@ struct SplitBillEditorView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel", systemImage: "xmark") { dismiss() }
+                        Button("Cancel", systemImage: "xmark", action: requestCancel)
                     }
                 }
                 .navigationDestination(for: Step.self) { step in
                     switch step {
                     case .items:
                         SplitItemsStepView(viewModel: viewModel) { path.append(.people) }
+                            .toolbar { cancelToolbarItem }
                     case .people:
                         SplitPeopleStepView(viewModel: viewModel) { path.append(.review) }
+                            .toolbar { cancelToolbarItem }
                     case .review:
                         SplitReviewStepView(
                             viewModel: viewModel,
@@ -56,6 +58,7 @@ struct SplitBillEditorView: View {
                             categories: categories,
                             onSave: save
                         )
+                        .toolbar { cancelToolbarItem }
                     }
                 }
         }
@@ -63,7 +66,7 @@ struct SplitBillEditorView: View {
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
             photoItem = nil
-            scanTask = Task {
+            Task {
                 if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data),
                    let compressed = ReceiptImage.compressedData(from: image)
                 {
@@ -77,16 +80,26 @@ struct SplitBillEditorView: View {
                 guard let data, let image = UIImage(data: data),
                       let compressed = ReceiptImage.compressedData(from: image)
                 else { return }
-                scanTask = Task { await runScan(compressed) }
+                Task { await runScan(compressed) }
             }
         }
-        .interactiveDismissDisabled(viewModel.scanState == .scanning)
+        .interactiveDismissDisabled(viewModel.isDirty)
+        .confirmationDialog("Discard this split?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
+            Button("Discard split", role: .destructive) { dismiss() }
+            Button("Keep editing", role: .cancel) {}
+        } message: {
+            Text("What you entered will be lost.")
+        }
     }
 
     private var sourceStep: some View {
         ScrollView {
             VStack(spacing: 20) {
                 receiptPreview
+
+                if viewModel.scanState == .scanning {
+                    DSButton("Cancel scan", variant: .tertiary) { viewModel.cancelScan() }
+                }
 
                 VStack(spacing: 12) {
                     if CameraPicker.isAvailable {
@@ -162,8 +175,23 @@ struct SplitBillEditorView: View {
         }
     }
 
+    @ToolbarContentBuilder
+    private var cancelToolbarItem: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button("Cancel", systemImage: "xmark", action: requestCancel)
+        }
+    }
+
+    private func requestCancel() {
+        if viewModel.isDirty {
+            isConfirmingDiscard = true
+        } else {
+            dismiss()
+        }
+    }
+
     private func runScan(_ data: Data) async {
-        await viewModel.scan(imageData: data)
+        await viewModel.startScan(imageData: data)
         if case .finished = viewModel.scanState {
             path.append(.items)
         }
