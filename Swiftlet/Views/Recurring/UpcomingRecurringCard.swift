@@ -33,6 +33,6 @@ struct UpcomingRecurringCard: View {
                 }
             }
         }
-        .card()
+        .dsSurface()
     }
 }

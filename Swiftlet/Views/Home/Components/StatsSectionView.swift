@@ -66,7 +66,7 @@ struct StatsSectionView: View {
                 .frame(height: 220)
             }
         }
-        .card()
+        .dsSurface()
     }
 
     private func summaryTile(title: String, amount: Decimal, tint: Color) -> some View {

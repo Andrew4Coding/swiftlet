@@ -221,6 +221,7 @@ targets:
       - path: "Swiftlet/Services/CurrencyFormatter.swift"
       - path: "Swiftlet/Services/Wallet/WalletMigrator.swift"
       - path: "Swiftlet/Views/Components/AppTheme.swift"
+      - path: "Swiftlet/DesignSystem/Tokens/Colors"
     entitlements:
       path: "SwiftletMenuBar/SwiftletMenuBar.entitlements"
       properties:

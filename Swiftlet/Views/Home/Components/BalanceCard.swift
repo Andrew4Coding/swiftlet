@@ -52,7 +52,7 @@ struct BalanceCard: View {
                 tile(title: "Expense", amount: expense, change: expenseChange, tint: AppTheme.expense, symbol: "arrow.up.right", goodWhenUp: false)
             }
         }
-        .card()
+        .dsSurface()
     }
 
     private var periodMenu: some View {

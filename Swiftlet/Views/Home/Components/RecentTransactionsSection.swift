@@ -36,6 +36,6 @@ struct RecentTransactionsSection: View {
                 }
             }
         }
-        .card()
+        .dsSurface()
     }
 }

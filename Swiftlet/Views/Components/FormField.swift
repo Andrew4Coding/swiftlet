@@ -110,13 +110,7 @@ struct PrimaryActionButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .frame(height: 52)
-        }
-        .buttonStyle(.glassProminent)
-        .disabled(!isEnabled)
+        DSButton(LocalizedStringKey(title), action: action)
+            .disabled(!isEnabled)
     }
 }

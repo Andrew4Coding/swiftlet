@@ -6,10 +6,10 @@
 import SwiftUI
 
 enum AppTheme {
-    static let accent = Color(hex: "0A84FF")
+    static var accent: Color { ColorToken.accent.color }
 
-    static let income = Color(hex: "34C759")
-    static let expense = Color(hex: "FF3B30")
+    static var income: Color { ColorToken.income.color }
+    static var expense: Color { ColorToken.expense.color }
 
     static let cornerRadius: CGFloat = 24
 
@@ -63,23 +63,6 @@ private extension Color {
         #else
         Color(nsColor: .windowBackgroundColor)
         #endif
-    }
-}
-
-struct CardBackground: ViewModifier {
-    var padding: CGFloat = 20
-
-    func body(content: Content) -> some View {
-        content
-            .padding(padding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius, style: .continuous))
-    }
-}
-
-extension View {
-    func card(padding: CGFloat = 20) -> some View {
-        modifier(CardBackground(padding: padding))
     }
 }
 

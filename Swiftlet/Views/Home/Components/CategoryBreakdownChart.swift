@@ -59,7 +59,7 @@ struct CategoryBreakdownChart: View {
                 }
             }
         }
-        .card()
+        .dsSurface()
     }
 }
 

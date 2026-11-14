@@ -27,7 +27,7 @@ struct SwiftletApp: App {
                     SignInView()
                 }
             }
-            .tint(AppTheme.accent)
+            .designSystemTheme()
             .environment(authService)
             .onOpenURL { url in
                 guard url.scheme == "swiftlet", url.host == "add-transaction" else { return }
