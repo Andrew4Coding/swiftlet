@@ -76,6 +76,7 @@ private struct DSButtonBody: View {
     let fillsWidth: Bool
 
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric private var height: CGFloat
 
     init(configuration: ButtonStyleConfiguration, variant: DSButtonVariant, size: DSButtonSize, fillsWidth: Bool) {
@@ -90,8 +91,10 @@ private struct DSButtonBody: View {
         configuration.label
             .font(size.typography.font)
             .foregroundStyle(variant.foreground.color)
-            .lineLimit(1)
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
+            .multilineTextAlignment(.center)
             .padding(.horizontal, size.horizontalPadding)
+            .padding(.vertical, dynamicTypeSize.isAccessibilitySize ? 10 : 0)
             .frame(maxWidth: fillsWidth ? .infinity : nil)
             .frame(minHeight: height)
             .background(variant.background.color, in: Capsule())
