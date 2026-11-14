@@ -17,6 +17,8 @@ A chat page where the user asks questions about their own data in plain language
 
 The chat lives in its own plain tab, so it is reachable from every screen without competing with the Add (+) button in Home's toolbar. A first version used the iOS 26 search-role tab, but on a real device it rendered merged into the other tabs, so it is now an ordinary fifth tab.
 
+Replies are built from structured blocks, not left to the model's prose: tools attach a chart, a table, a list of tappable transactions or photos to the reply, and the model adds one or two short sentences. That keeps tables and figures reliable on a small on-device model.
+
 Replies are detailed but short: when listing money they give the date, category and title. The assistant can show receipt and bill photos inline, and can say what it can do and what the user can do in the app. It answers in the language of the user's latest message.
 
 ## User stories
@@ -50,6 +52,12 @@ Replies are detailed but short: when listing money they give the date, category 
 - [ ] **AC20**: Given the user asks how much was spent, when `SpendingSummaryTool` runs, then the result can be grouped by category, day or wallet, and always lists the largest 3 transactions with date, category and title.
 - [ ] **AC21**: Given the user asks what the assistant can do, or what they can do in the app, when `AppInfoTool` runs, then the reply lists the questions it can answer and the actions available in the app (add a transaction, split a bill, set up recurring, manage wallets and categories, import and export), and says it cannot make changes itself.
 - [ ] **AC22**: Given the user writes in any language, when the assistant replies, then it uses the language of the latest user message; amounts still show as rupiah.
+- [ ] **AC24**: Given the user asks about spending or income grouped into two or more groups, when `SpendingSummaryTool` runs, then a horizontal bar chart of those groups (category, day or wallet) is attached to the reply with each bar's amount labelled.
+- [ ] **AC25**: Given the user touches and holds a message bubble, when the context menu shows, then Copy places the message text on the pasteboard, including any attached table as tab-separated text.
+- [ ] **AC26**: Given the user asks for transactions, upcoming bills, who owes them or wallet balances, when the tool runs, then the data is attached as a table with a header row, instead of being written out as prose.
+- [ ] **AC27**: Given a table row is a transaction, when the user taps it, then that transaction's detail screen opens in a sheet, and closing it returns to the chat.
+- [ ] **AC28**: Given a date is shown in a reply, table or chart, then it uses the device's locale format (for example 14 Nov 2026), never yyyy-MM-dd. Tool inputs still use yyyy-MM-dd.
+- [ ] **AC29**: Given a reply or table shows an amount, date or title, then it is bold; amounts and dates in the model's text are bolded automatically even if the model forgets.
 - [ ] **AC23**: Given the user asks which categories or wallets exist, when `AppInfoTool` runs, then it returns the category and wallet names so later questions can use exact names.
 
 ## UX
@@ -99,7 +107,7 @@ Notes: uses only the system Foundation Models framework, so no new dependency. A
 - Voice input and Siri or App Intents entry points.
 - A secondary "Ask about this" entry on Transactions or stats.
 - macOS menu bar and widgets.
-- Charts or rich cards inside replies.
+- Charts other than the spending bar chart; interactive chart selection.
 
 ## Open questions
 
