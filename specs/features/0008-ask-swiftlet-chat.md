@@ -1,7 +1,7 @@
 ---
 id: 0008
 title: Ask Swiftlet chat
-status: approved
+status: in-progress
 owner: andrew4coding
 targets: [app]
 created: 2026-11-14
@@ -26,8 +26,8 @@ The chat lives in its own tab using the iOS 26 search role, so it is reachable f
 
 ## Acceptance criteria
 
-- [ ] **AC1**: Given the app is open, when the user looks at the tab bar, then an "Ask" tab with a sparkles icon sits at the trailing end as a search-role tab, separate from Home, Transactions, Splits and Account.
-- [ ] **AC2**: Given the Ask tab is selected and the chat is empty, when it appears, then 3 to 4 suggested prompt chips show, and tapping one sends it as a message.
+- [x] **AC1**: Given the app is open, when the user looks at the tab bar, then an "Ask" tab with a sparkles icon sits at the trailing end as a search-role tab, separate from Home, Transactions, Splits and Account.
+- [x] **AC2**: Given the Ask tab is selected and the chat is empty, when it appears, then 3 to 4 suggested prompt chips show, and tapping one sends it as a message.
 - [ ] **AC3**: Given the user sends a question about spending in a category and period, when the model answers, then the figure comes from `SpendingSummaryTool` totals computed with integer rupiah, and matches the sum of the matching transactions.
 - [ ] **AC4**: Given a question like "last month" or "this week", when the tool is called, then the model passes explicit start and end dates and the session instructions include today's date.
 - [ ] **AC5**: Given a question about transactions, when `FindTransactionsTool` runs, then it returns at most 10 results, newest first, each with title, category, wallet, amount and date.
@@ -41,7 +41,7 @@ The chat lives in its own tab using the iOS 26 search role, so it is reachable f
 - [ ] **AC13**: Given `SystemLanguageModel.default.availability` is not available, when the Ask tab opens, then the input is disabled and the empty state explains why (device not eligible, Apple Intelligence off, or model not ready).
 - [ ] **AC14**: Given a question the data cannot answer, when the model replies, then it says it could not find that in the user's data and does not invent figures.
 - [ ] **AC15**: Given the user writes in Indonesian, when the model answers, then the reply is in Indonesian with amounts formatted as rupiah (for example `Rp20.000`).
-- [ ] **AC16**: Tools only read; no tool creates, edits or deletes data.
+- [x] **AC16**: Tools only read; no tool creates, edits or deletes data.
 
 ## UX
 
@@ -101,4 +101,8 @@ Notes: uses only the system Foundation Models framework, so no new dependency. A
 
 ## Implementation notes
 
-Filled during and after build by the `codebase-sync` skill: main types, files, tests.
+- Built: `Services/Chat` (snapshots, queries, reports, session factory, five tools), `ViewModels/ChatViewModel`, `Views/Chat` (`ChatView`, `ChatBubbleView`, `ChatInputBar`), Ask tab in `RootTabView`.
+- Tests: `ChatQueriesTests` covers dates, spending sums, search cap and order, debts, upcoming, reports and history summary (the logic behind AC3 to AC8 and AC11's summary).
+- Checked by hand in the simulator: AC1 and AC2 (tab and chips, tapping a chip sends it) and the failure bubble with Try again. AC16 holds by inspection: every tool only reads.
+- Not verified: end-to-end answers (AC3 to AC10, AC14, AC15) and the context-overflow retry (AC11). The simulator cannot run generation (`ModelManagerError 1001`), so these need a device with Apple Intelligence. AC12 and AC13 are implemented but not exercised.
+- Not done: suggestion chip text and the unavailable-state strings are not yet in `Localizable.xcstrings` because they are passed as plain strings.
