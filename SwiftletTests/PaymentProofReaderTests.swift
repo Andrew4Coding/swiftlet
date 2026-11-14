@@ -142,5 +142,22 @@ struct PaymentProofReaderTests {
         await viewModel.applyDetectedCategory(merchant: "Xqzvw Ltd", from: categories)
         #expect(viewModel.selectedCategory?.name != "Other")
     }
-}
 
+    @Test func timeoutReturnsNilWhenWorkIsSlow() async {
+        let clock = ContinuousClock()
+        var value: Int?
+        let elapsed = await clock.measure {
+            value = await PaymentProofReader.withTimeout(.milliseconds(100)) {
+                try? await Task.sleep(for: .seconds(5))
+                return 7
+            }
+        }
+        #expect(value == nil)
+        #expect(elapsed < .seconds(2))
+    }
+
+    @Test func timeoutReturnsValueWhenWorkIsFast() async {
+        let value = await PaymentProofReader.withTimeout(.seconds(2)) { 7 }
+        #expect(value == 7)
+    }
+}

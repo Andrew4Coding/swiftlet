@@ -24,6 +24,26 @@ nonisolated enum PaymentProofReader {
 
     private static let maxCharacters = 3500
 
+    static let detectionLimit: Duration = .seconds(2)
+
+    static func read(imageData: Data, timeout: Duration) async -> Result? {
+        await withTimeout(timeout) { await read(imageData: imageData) }
+    }
+
+    static func withTimeout<T: Sendable>(
+        _ timeout: Duration,
+        operation: @escaping @Sendable () async -> T
+    ) async -> T? {
+        await withCheckedContinuation { continuation in
+            let gate = TimeoutGate<T>(continuation)
+            let work = Task { gate.finish(await operation()) }
+            Task {
+                try? await Task.sleep(for: timeout)
+                if gate.finish(nil) { work.cancel() }
+            }
+        }
+    }
+
     static func read(imageData: Data) async -> Result {
         guard let lines = try? await recognizeRows(in: imageData), !lines.isEmpty else {
             return Result()
@@ -136,5 +156,24 @@ nonisolated enum PaymentProofReader {
         Also return the merchant or recipient name exactly as printed.
         """)
         return try? await session.respond(to: text, generating: ModelPaymentProof.self).content
+    }
+}
+
+private final class TimeoutGate<T: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<T?, Never>?
+
+    init(_ continuation: CheckedContinuation<T?, Never>) {
+        self.continuation = continuation
+    }
+
+    @discardableResult
+    func finish(_ value: T?) -> Bool {
+        lock.lock()
+        let pending = continuation
+        continuation = nil
+        lock.unlock()
+        pending?.resume(returning: value)
+        return pending != nil
     }
 }

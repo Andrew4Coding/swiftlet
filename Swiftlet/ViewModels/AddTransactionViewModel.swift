@@ -20,6 +20,7 @@ final class AddTransactionViewModel {
     var receiptImageData: Data?
     var shouldDetectAmount = false
     var isDetectingAmount = false
+    var amountDetectionTimedOut = false
     var detectedAmount: Int?
 
     var errorMessage: String?

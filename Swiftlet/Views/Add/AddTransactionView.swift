@@ -134,8 +134,12 @@ struct AddTransactionView: View {
         guard viewModel.shouldDetectAmount, let data = viewModel.receiptImageData else { return }
         viewModel.shouldDetectAmount = false
         viewModel.isDetectingAmount = true
-        let proof = await PaymentProofReader.read(imageData: data)
+        let proof = await PaymentProofReader.read(imageData: data, timeout: PaymentProofReader.detectionLimit)
         viewModel.isDetectingAmount = false
+        guard let proof else {
+            viewModel.amountDetectionTimedOut = true
+            return
+        }
         if let amount = proof.amount, calculator.finalValue == 0 {
             calculator.setAmount(amount)
             viewModel.detectedAmount = amount
@@ -170,6 +174,10 @@ struct AddTransactionView: View {
 
             if viewModel.isDetectingAmount {
                 Text("Reading amount…")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else if viewModel.amountDetectionTimedOut, calculator.finalValue == 0 {
+                Label("Amount not detected", systemImage: "exclamationmark.circle")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             } else if isAmountDetected {
