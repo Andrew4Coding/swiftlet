@@ -51,7 +51,7 @@ struct StatsSectionView: View {
                         .foregroundStyle(by: .value("Type", "Expense"))
                         .position(by: .value("Type", "Expense"))
                 }
-                .chartForegroundStyleScale(["Income": AppTheme.income.gradient, "Expense": AppTheme.expense.gradient])
+                .chartForegroundStyleScale(["Income": AppTheme.income, "Expense": AppTheme.expense])
                 .chartLegend(position: .bottom, spacing: 8)
                 .chartYAxis {
                     AxisMarks { value in

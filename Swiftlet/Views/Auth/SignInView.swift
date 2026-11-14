@@ -20,7 +20,6 @@ private struct OnboardingSlide: Identifiable {
         let colorHex: String
         let title: String
         let detail: String
-        var progress: Double?
         let x: CGFloat
         let y: CGFloat
     }
@@ -86,7 +85,7 @@ struct SignInView: View {
 
     var body: some View {
         ZStack {
-            SignInSky()
+            Color.ds(.ink).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 wordmark
@@ -139,8 +138,7 @@ struct SignInView: View {
             .font(.system(size: 26, weight: .heavy, design: .rounded))
             .italic()
             .tracking(1.5)
-            .foregroundStyle(.white)
-            .shadow(color: Color(hex: "1E5A96").opacity(0.25), radius: 8, y: 2)
+            .foregroundStyle(Color.ds(.accentFill))
     }
 
     private func slideView(_ slide: OnboardingSlide) -> some View {
@@ -176,11 +174,10 @@ struct SignInView: View {
             Text(slide.headline)
                 .foregroundStyle(.white)
             Text(slide.accent)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(Color.ds(.accentFill))
         }
-        .font(.system(size: 30, weight: .semibold, design: .rounded))
+        .dsTextStyle(.title)
         .multilineTextAlignment(.center)
-        .shadow(color: Color(hex: "1E5A96").opacity(0.25), radius: 8, y: 2)
         .accessibilityElement(children: .combine)
     }
 
@@ -190,7 +187,6 @@ struct SignInView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 170, height: 170)
-                .shadow(color: Color(hex: "1E3A8A").opacity(0.25), radius: 16, y: 10)
                 .rotationEffect(.degrees(floatPhase ? 2 : -2))
 
             ForEach(slide.orbs.indices, id: \.self) { index in
@@ -215,17 +211,11 @@ struct SignInView: View {
                 Text(callout.detail)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                if let progress = callout.progress {
-                    ProgressView(value: progress)
-                        .tint(Color(hex: "FF9500"))
-                        .frame(width: 110)
-                }
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color(hex: "1E5A96").opacity(0.15), radius: 12, y: 6)
+        .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .environment(\.colorScheme, .light)
     }
 
@@ -233,7 +223,7 @@ struct SignInView: View {
         HStack(spacing: 6) {
             ForEach(slides) { slide in
                 Capsule()
-                    .fill(Color(hex: "1E5A96").opacity(slide.id == selection ? 0.8 : 0.25))
+                    .fill(slide.id == selection ? Color.ds(.accentFill) : Color.white.opacity(0.3))
                     .frame(width: slide.id == selection ? 22 : 7, height: 7)
                     .onTapGesture {
                         show(slide.id)
@@ -248,22 +238,19 @@ struct SignInView: View {
     private var actions: some View {
         VStack(spacing: 12) {
             SignInButton(style: .white, cornerRadius: 25)
-                .shadow(color: Color(hex: "1E5A96").opacity(0.15), radius: 10, y: 4)
 
             Button {
                 authService.continueWithoutAccount()
             } label: {
                 Text("Continue without an account")
                     .font(.body.weight(.medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(.white.opacity(0.55), in: Capsule())
-                    .overlay(Capsule().strokeBorder(.white.opacity(0.8), lineWidth: 1))
-                    .shadow(color: Color(hex: "1E5A96").opacity(0.12), radius: 10, y: 4)
+                    .background(.white.opacity(0.1), in: Capsule())
+                    .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 1))
             }
             .buttonStyle(.plain)
-            .environment(\.colorScheme, .light)
 
             HStack {
                 Link("Privacy Policy", destination: Self.privacyURL)
@@ -271,55 +258,12 @@ struct SignInView: View {
                 Link("Support", destination: Self.supportURL)
             }
             .font(.footnote)
-            .foregroundStyle(Color(hex: "1E3A5F").opacity(0.6))
+            .foregroundStyle(.white.opacity(0.7))
+            .tint(.white.opacity(0.7))
             .padding(.horizontal, 24)
             .padding(.top, 8)
         }
         .padding(.bottom, 24)
-    }
-}
-
-/// Sky gradient with soft drifting clouds, drawn in code so no image assets are needed.
-private struct SignInSky: View {
-    @State private var drift = false
-
-    var body: some View {
-        GeometryReader { proxy in
-            let size = proxy.size
-            ZStack {
-                LinearGradient(
-                    colors: [Color(hex: "5B9BD5"), Color(hex: "8EC1EA"), Color(hex: "CFE6F7")],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-
-                cloud(width: size.width * 0.9, height: 120)
-                    .position(x: size.width * 0.15 + (drift ? 12 : -12), y: size.height * 0.46)
-                cloud(width: size.width * 0.8, height: 110)
-                    .position(x: size.width * 0.95 + (drift ? -14 : 14), y: size.height * 0.36)
-                cloud(width: size.width * 1.4, height: 220)
-                    .position(x: size.width * 0.5, y: size.height * 0.92)
-                cloud(width: size.width, height: 160)
-                    .position(x: size.width * 0.1 + (drift ? 10 : -10), y: size.height * 0.8)
-            }
-        }
-        .ignoresSafeArea()
-        .onAppear {
-            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
-                drift = true
-            }
-        }
-        .accessibilityHidden(true)
-    }
-
-    private func cloud(width: CGFloat, height: CGFloat) -> some View {
-        ZStack {
-            Ellipse().frame(width: width, height: height)
-            Ellipse().frame(width: width * 0.55, height: height * 1.1).offset(x: -width * 0.18, y: -height * 0.3)
-            Ellipse().frame(width: width * 0.45, height: height * 0.9).offset(x: width * 0.2, y: -height * 0.25)
-        }
-        .foregroundStyle(.white.opacity(0.75))
-        .blur(radius: 28)
     }
 }
 

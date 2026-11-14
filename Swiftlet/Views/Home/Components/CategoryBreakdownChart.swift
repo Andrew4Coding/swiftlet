@@ -34,7 +34,7 @@ struct CategoryBreakdownChart: View {
                         angularInset: 1.5
                     )
                     .cornerRadius(4)
-                    .foregroundStyle(Color(hex: slice.colorHex).gradient)
+                    .foregroundStyle(Color(hex: slice.colorHex))
                 }
                 .frame(height: 200)
 

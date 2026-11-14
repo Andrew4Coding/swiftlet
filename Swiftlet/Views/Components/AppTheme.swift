@@ -22,48 +22,6 @@ enum AppTheme {
     static func paletteHex(at index: Int) -> String {
         palette[((index % palette.count) + palette.count) % palette.count]
     }
-
-    static var skyGradient: LinearGradient {
-        LinearGradient(
-            colors: [Color(hex: "BFDDF7"), Color(hex: "E6F1FB"), .groupedBackground],
-            startPoint: .top,
-            endPoint: .center
-        )
-    }
-}
-
-#if os(iOS)
-struct SkyBackground: View {
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Group {
-            if colorScheme == .dark {
-                LinearGradient(
-                    colors: [Color(hex: "0B2A4A"), Color(.systemBackground)],
-                    startPoint: .top,
-                    endPoint: .center
-                )
-            } else {
-                AppTheme.skyGradient
-            }
-        }
-        .ignoresSafeArea()
-    }
-}
-#endif
-
-private extension Color {
-    /// The system's grouped-background color, cross-platform: only the iOS app renders
-    /// `SkyBackground`/`skyGradient`, but `TransactionCategory.resolvedColorHex` pulls in
-    /// `AppTheme` on every platform that links the model, including the macOS menu bar app.
-    static var groupedBackground: Color {
-        #if os(iOS)
-        Color(.systemGroupedBackground)
-        #else
-        Color(nsColor: .windowBackgroundColor)
-        #endif
-    }
 }
 
 extension Color {

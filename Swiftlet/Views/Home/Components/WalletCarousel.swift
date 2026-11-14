@@ -55,16 +55,11 @@ struct WalletCarousel: View {
         }
         .frame(width: 140, alignment: .leading)
         .padding(14)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(alignment: .topTrailing) {
-            Circle()
-                .fill(Color(hex: wallet.colorHex).opacity(0.25))
-                .frame(width: 60, height: 60)
-                .blur(radius: 20)
-                .offset(x: 10, y: -10)
-                .allowsHitTesting(false)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(Color.ds(.surface), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(Color.ds(.border).opacity(0.6), lineWidth: 0.5)
+        )
         .accessibilityElement(children: .combine)
     }
 
@@ -76,12 +71,12 @@ struct WalletCarousel: View {
                 Text("Add wallet")
                     .font(.caption.weight(.medium))
             }
-            .foregroundStyle(Color.accentColor)
+            .foregroundStyle(Color.ds(.accent))
             .frame(width: 100, height: 100)
             .padding(.vertical, 2)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(Color.accentColor.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                    .strokeBorder(Color.ds(.accent).opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
             )
         }
         .buttonStyle(.plain)

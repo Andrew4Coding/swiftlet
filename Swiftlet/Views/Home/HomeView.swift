@@ -46,11 +46,13 @@ struct HomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
-            .background(SkyBackground())
+            .background(Color.ds(.canvas))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add Transaction", systemImage: "plus") { isPresentingAdd = true }
                         .buttonStyle(.glassProminent)
+                        .tint(Color.ds(.accentFill))
+                        .foregroundStyle(Color.ds(.onAccent))
                 }
             }
             .sheet(isPresented: $isPresentingAdd) {

@@ -88,7 +88,7 @@ struct ColorSwatchRow: View {
                     selectionHex = hex
                 } label: {
                     Circle()
-                        .fill(Color(hex: hex).gradient)
+                        .fill(Color(hex: hex))
                         .frame(width: 28, height: 28)
                         .padding(3)
                         .overlay(

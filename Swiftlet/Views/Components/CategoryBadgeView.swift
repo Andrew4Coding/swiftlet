@@ -23,7 +23,7 @@ struct CategoryBadgeView: View {
     }
 }
 
-/// Glossy coloured orb with an emoji or SF Symbol on top, shared by categories and wallets.
+/// Flat coloured circle with an emoji or SF Symbol on top, shared by categories and wallets.
 struct IconBadge: View {
     let iconType: CategoryIconType
     let iconValue: String
@@ -37,18 +37,7 @@ struct IconBadge: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [color.mix(with: .white, by: 0.35), color],
-                        center: UnitPoint(x: 0.3, y: 0.25),
-                        startRadius: 0,
-                        endRadius: size * 0.75
-                    )
-                )
-                .overlay(
-                    Circle()
-                        .strokeBorder(.white.opacity(0.35), lineWidth: max(1, size * 0.03))
-                )
+                .fill(iconType == .emoji ? color.opacity(0.2) : color)
 
             switch iconType {
             case .emoji:

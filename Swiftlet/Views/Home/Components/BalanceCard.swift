@@ -28,13 +28,10 @@ struct BalanceCard: View {
                     periodMenu
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(hidesBalance ? "Rp ••••••" : CurrencyFormatter.rupiah(totalBalance))
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                        .contentTransition(.numericText())
-                        .foregroundStyle(totalBalance < 0 && !hidesBalance ? AppTheme.expense : .primary)
+                    DSAmountText(
+                        text: hidesBalance ? "Rp ••••••" : CurrencyFormatter.rupiah(totalBalance),
+                        color: totalBalance < 0 && !hidesBalance ? .expense : .textPrimary
+                    )
                     Button {
                         withAnimation(.snappy) { hidesBalance.toggle() }
                     } label: {
@@ -48,8 +45,8 @@ struct BalanceCard: View {
             }
 
             HStack(spacing: 12) {
-                tile(title: "Income", amount: income, change: incomeChange, tint: AppTheme.income, symbol: "arrow.down.left", goodWhenUp: true)
-                tile(title: "Expense", amount: expense, change: expenseChange, tint: AppTheme.expense, symbol: "arrow.up.right", goodWhenUp: false)
+                tile(title: "Income", amount: income, change: incomeChange, tint: .income, symbol: "arrow.down.left", goodWhenUp: true)
+                tile(title: "Expense", amount: expense, change: expenseChange, tint: .expense, symbol: "arrow.up.right", goodWhenUp: false)
             }
         }
         .dsSurface()
@@ -73,14 +70,10 @@ struct BalanceCard: View {
         .tint(.primary)
     }
 
-    private func tile(title: String, amount: Decimal, change: Double?, tint: Color, symbol: String, goodWhenUp: Bool) -> some View {
+    private func tile(title: String, amount: Decimal, change: Double?, tint: ColorToken, symbol: String, goodWhenUp: Bool) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Image(systemName: symbol)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(tint)
-                    .frame(width: 22, height: 22)
-                    .background(tint.opacity(0.15), in: Circle())
+                DSIconCircle(systemImage: symbol, tint: tint, size: 22)
                 Text(title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -96,7 +89,7 @@ struct BalanceCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color(.systemBackground).opacity(0.6), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color.ds(.canvas), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func changeBadge(_ change: Double, goodWhenUp: Bool) -> some View {
@@ -120,5 +113,5 @@ struct BalanceCard: View {
     @Previewable @State var period = PeriodOption.thisMonth
     BalanceCard(totalBalance: 12_129_910, income: 7_129_000, expense: 5_129_000, incomeChange: -0.12, expenseChange: 0.04, period: $period)
         .padding()
-        .background(SkyBackground())
+        .background(Color.ds(.canvas))
 }
