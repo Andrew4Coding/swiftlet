@@ -33,6 +33,7 @@ struct AddTransactionView: View {
     init(receiptImageData: Data?) {
         let viewModel = AddTransactionViewModel()
         viewModel.receiptImageData = receiptImageData
+        viewModel.shouldDetectAmount = receiptImageData != nil
         _viewModel = State(initialValue: viewModel)
         _calculator = State(initialValue: AmountCalculatorViewModel())
     }
@@ -94,6 +95,7 @@ struct AddTransactionView: View {
                 }
             }
             .task { viewModel.assignDefaultWallets(context: modelContext) }
+            .task { await detectSharedAmount() }
             .sheet(item: $categoryEditor) { target in
                 CustomCategoryEditorView(
                     editing: target.category,
@@ -128,6 +130,22 @@ struct AddTransactionView: View {
         .presentationDragIndicator(.visible)
     }
 
+    private func detectSharedAmount() async {
+        guard viewModel.shouldDetectAmount, let data = viewModel.receiptImageData else { return }
+        viewModel.shouldDetectAmount = false
+        viewModel.isDetectingAmount = true
+        let amount = await PaidAmountDetector.detect(imageData: data)
+        viewModel.isDetectingAmount = false
+        guard let amount, calculator.finalValue == 0 else { return }
+        calculator.setAmount(amount)
+        viewModel.detectedAmount = amount
+    }
+
+    private var isAmountDetected: Bool {
+        guard let detected = viewModel.detectedAmount else { return false }
+        return calculator.finalValue == Decimal(detected)
+    }
+
     private var amountDisplay: some View {
         VStack(spacing: 10) {
             Text(calculator.expressionDisplay.isEmpty ? " " : calculator.expressionDisplay)
@@ -147,6 +165,16 @@ struct AddTransactionView: View {
             .padding(.horizontal, 20)
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Amount \(calculator.formattedCurrentInput)")
+
+            if viewModel.isDetectingAmount {
+                Text("Reading amount…")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else if isAmountDetected {
+                Label("Detected from image", systemImage: "sparkles")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
 
             if viewModel.type == .transfer {
                 transferSummary

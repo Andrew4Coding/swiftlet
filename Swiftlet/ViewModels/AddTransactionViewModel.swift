@@ -18,6 +18,9 @@ final class AddTransactionViewModel {
     var descriptionText: String = ""
     var selectedCategory: TransactionCategory?
     var receiptImageData: Data?
+    var shouldDetectAmount = false
+    var isDetectingAmount = false
+    var detectedAmount: Int?
 
     var errorMessage: String?
 
