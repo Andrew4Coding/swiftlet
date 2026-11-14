@@ -1,6 +1,6 @@
 ---
 id: 0007
-title: Detect paid amount from shared images
+title: Detect amount and category from shared images
 status: in-progress
 owner: andrew4coding
 targets: [app, share-extension]
@@ -9,11 +9,15 @@ updated: 2026-11-14
 related: [0004]
 ---
 
-# 0007: Detect paid amount from shared images
+# 0007: Detect amount and category from shared images
 
 ## Summary
 
-Sharing a payment proof (QRIS receipt, bank transfer screenshot, e-wallet confirmation) to Swiftlet opens Add Transaction with the image attached but an empty amount. The app now reads the image on device and pre-fills the total paid, so the user only confirms. Text is recognised with Vision and the amount is picked by the on-device Foundation Models model, so nothing leaves the phone.
+Sharing a payment proof (QRIS receipt, bank transfer screenshot, e-wallet confirmation) to Swiftlet opens Add Transaction with the image attached but an empty amount. The app now reads the image on device and pre-fills the total paid and the category, so the user only confirms. Text is recognised with Vision and the amount is picked by the on-device Foundation Models model, so nothing leaves the phone.
+
+The category comes from the merchant (or recipient) name on the proof, classified by the bundled `TransactionCategoryModel` against the user's own categories, with the Foundation Models `CategoryClassifier` as fallback.
+
+Speed: a labelled total is read with plain keyword rules and no language model call; the model runs only when the amount or merchant could not be read that way.
 
 Detection runs in the host app, not the share extension: extensions have a tight memory limit and must hand off quickly, and the app already owns `ReceiptScanner` (Vision) and the Foundation Models parsers.
 
@@ -33,6 +37,15 @@ Detection runs in the host app, not the share extension: extensions have a tight
 - [x] **AC7**: Given Foundation Models is unavailable, when an image is shared, then a deterministic fallback picks the amount from a line labelled total/jumlah/nominal/total bayar, else leaves it empty.
 - [ ] **AC8**: Given the image is attached from the photo picker or camera inside Add Transaction (not shared), then no detection runs (out of scope).
 - [x] **AC9**: Detected values are validated: must be an integer from 1 to 999,999,999,999; anything else is discarded.
+
+Category and speed:
+
+- [ ] **AC10**: Given a proof that names a merchant, when detection succeeds and the type is expense with no category chosen, then the category the classifier picks among the user's expense-applicable categories is selected.
+- [ ] **AC11**: Given the user already chose a category, or switched the type away from expense, before detection finishes, then the detected category is not applied.
+- [ ] **AC12**: Given the classifier is not confident or the merchant is unknown, then no category is selected (never "Other" by default).
+- [ ] **AC13**: Given the proof shows a labelled total and a labelled merchant, when detection runs, then no Foundation Models call is made.
+- [ ] **AC14**: Given a rendered proof image, when the full pipeline runs (OCR, amount, merchant, category), then amount and category match the image. (test, with the model unavailable)
+- [ ] **AC15**: A model-supplied merchant is discarded unless it appears in the OCR text.
 
 ## UX
 
@@ -59,14 +72,14 @@ none. No schema change. `AmountDetector` result is held in view state only.
 
 ## Out of scope
 
-- Detecting title, category, wallet or date from the image (candidates for a later spec).
+- Detecting title, wallet or date from the image (candidates for a later spec). The merchant is used only to pick the category, not written to the title.
 - Detection for images picked inside Add Transaction.
 - Share extension changes to process the image in-extension.
 - Non-rupiah currencies.
 
 ## Open questions
 
-- Should detection also auto-fill the title from the merchant name? Proposed: no, keep this spec to the amount.
+- Should the merchant name also fill the title? Proposed: no for now; only the category uses it.
 - Should the transaction type default to expense for payment proofs? It already defaults to expense.
 
 ## Implementation notes
