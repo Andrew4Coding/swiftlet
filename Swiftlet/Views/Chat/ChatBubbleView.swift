@@ -15,6 +15,10 @@ struct ChatBubbleView: View {
             if isUser { Spacer(minLength: 48) }
             VStack(alignment: .leading, spacing: 8) {
                 bubbleContent
+                ForEach(Array(message.images.enumerated()), id: \.offset) { _, data in
+                    ReceiptPreviewButton(imageData: data)
+                        .frame(maxWidth: 260)
+                }
                 if message.state == .failed, let onRetry {
                     Button("Try again", systemImage: "arrow.clockwise", action: onRetry)
                         .font(TypographyToken.subheadlineEmphasized.font)

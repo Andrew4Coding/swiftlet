@@ -29,11 +29,16 @@ struct ChatView: View {
                 }
             }
             .safeAreaBar(edge: .bottom) {
-                ChatInputBar(
-                    text: $viewModel.input,
-                    isEnabled: viewModel.availability == .available,
-                    canSend: viewModel.canSend
-                ) { viewModel.send() }
+                VStack(spacing: 4) {
+                    if !viewModel.messages.isEmpty, viewModel.availability == .available {
+                        ChatSuggestionStrip(isEnabled: !viewModel.isResponding) { viewModel.send($0) }
+                    }
+                    ChatInputBar(
+                        text: $viewModel.input,
+                        isEnabled: viewModel.availability == .available,
+                        canSend: viewModel.canSend
+                    ) { viewModel.send() }
+                }
             }
             .confirmationDialog("Start a new chat?", isPresented: $isConfirmingNewChat, titleVisibility: .visible) {
                 Button("New chat", role: .destructive) { viewModel.newChat() }
