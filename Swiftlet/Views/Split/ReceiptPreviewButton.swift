@@ -11,8 +11,13 @@ struct ReceiptPreviewButton: View {
     @State private var image: UIImage?
     @State private var isPresenting = false
 
+    init(imageData: Data) {
+        self.imageData = imageData
+        _image = State(initialValue: UIImage(data: imageData))
+    }
+
     var body: some View {
-        Group {
+        ZStack {
             if let image {
                 Button {
                     isPresenting = true
