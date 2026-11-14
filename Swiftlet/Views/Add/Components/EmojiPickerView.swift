@@ -59,6 +59,7 @@ struct EmojiPickerView: View {
                     .frame(height: 52)
             }
             .buttonStyle(.glassProminent)
+            .foregroundStyle(Color.ds(.onAccent))
             .padding(.horizontal)
             .padding(.bottom, 8)
         }

@@ -34,6 +34,17 @@ struct IconBadge: View {
         Color(hex: colorHex)
     }
 
+    private var symbolColor: Color {
+        let hex = colorHex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        guard hex.count == 6, let value = UInt32(hex, radix: 16) else { return .white }
+        func channel(_ shift: UInt32) -> Double {
+            let c = Double((value >> shift) & 0xFF) / 255
+            return c <= 0.03928 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+        }
+        let luminance = 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+        return luminance > 0.35 ? Color.ds(.onAccent) : .white
+    }
+
     var body: some View {
         ZStack {
             Circle()
@@ -46,7 +57,7 @@ struct IconBadge: View {
             case .system:
                 Image(systemName: iconValue)
                     .font(.system(size: size * 0.42, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(symbolColor)
             }
         }
         .frame(width: size, height: size)

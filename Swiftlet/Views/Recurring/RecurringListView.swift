@@ -58,6 +58,7 @@ struct RecurringListView: View {
                 } actions: {
                     Button("Add Recurring") { editorTarget = .new }
                         .buttonStyle(.glassProminent)
+                        .foregroundStyle(Color.ds(.onAccent))
                 }
                 .listRowBackground(Color.clear)
             }
