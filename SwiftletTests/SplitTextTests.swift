@@ -137,6 +137,18 @@ struct SplitTextAssignmentTests {
         #expect(viewModel.split.unassigned == 0)
     }
 
+    @Test func iAndMeResolveToTheCurrentUser() {
+        let viewModel = makeViewModel()
+        let preview = viewModel.previewText("I had 2 nasi goreng, Me: 3 es teh, Andrew beli 2 es teh")
+
+        #expect(preview.entries.map(\.name).sorted() == ["Andrew", "You"])
+        viewModel.applyText(preview)
+
+        #expect(viewModel.participants.count == 2)
+        #expect(viewModel.items[0].assigneeUnits[viewModel.participants[0].id] == 2)
+        #expect(viewModel.items[1].assigneeUnits[viewModel.participants[0].id] == 3)
+    }
+
     @Test func tappingAChipResetsUnits() {
         let viewModel = makeViewModel()
         viewModel.applyText(viewModel.previewText("Andrew beli 2 es teh"))

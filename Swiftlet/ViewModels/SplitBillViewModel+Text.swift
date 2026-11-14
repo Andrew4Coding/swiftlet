@@ -47,7 +47,7 @@ extension SplitBillViewModel {
         var isEmpty: Bool { entries.isEmpty }
     }
 
-    private static let selfAliases: Set<String> = ["saya", "aku", "gue", "gua", "gw", "me", "i", "myself", "you", "kamu"]
+    private static let selfAliases: Set<String> = ["saya", "aku", "gue", "gua", "gw", "me", "i", "im", "my", "mine", "myself", "you", "kamu"]
 
     func previewText(_ text: String) -> TextPreview {
         let parsed = SplitTextParser.parse(text)
@@ -117,7 +117,8 @@ extension SplitBillViewModel {
 
     func resolveParticipant(named name: String) -> UUID? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        if Self.selfAliases.contains(trimmed.lowercased()), let me = participants.first(where: \.isMe) {
+        let alias = trimmed.lowercased().filter { $0.isLetter }
+        if Self.selfAliases.contains(alias), let me = participants.first(where: \.isMe) {
             return me.id
         }
         if let exact = participants.first(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) {
