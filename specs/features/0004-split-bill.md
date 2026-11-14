@@ -46,7 +46,7 @@ Calculator and parser criteria (AC1, AC2, AC5, AC6) are covered by unit tests. T
 | Content | Items list, people with assignment chips, live "left to assign" amount, per-person totals |
 | Error | Scan failed or nothing recognised: keep the photo, fall back to manual entry with a plain message |
 
-Entry points: a Splits button in the Home toolbar opens the Splits screen, which holds "Split a bill".
+Entry point: a Splits tab between Transactions and Account, which holds "Split a bill".
 
 Flow: 1) scan, pick a photo, or enter manually, 2) review items and extras, 3) choose people and assign items, 4) pick wallet and category, then save.
 
@@ -88,7 +88,7 @@ Main types:
 
 - `Services/Split/SplitCalculator` (integer equal, proportional and itemized splitting), `ReceiptParser` and `ReceiptMath` (text to items, plus the add-up check), `ReceiptScanner` (Vision `RecognizeDocumentsRequest`, rows rebuilt from text positions), `ReceiptModelParser` (Foundation Models fallback, used only when the deterministic result does not add up).
 - Models `SplitBill`, `SplitItem`, `SplitShare`, `SplitPerson`. `Transaction.splitBill` links the paying transaction, whose amount is the user's share. `Wallet.balance` subtracts what others still owe.
-- `ViewModels/SplitBillViewModel` and `Views/Split/` (editor steps, Splits list, detail with settlement). Entry is the Splits button in the Home toolbar.
+- `ViewModels/SplitBillViewModel` and `Views/Split/` (editor steps, Splits list, detail with settlement). Entry is the Splits tab in `RootTabView`.
 
 Tests: `SwiftletTests` (new target) covers the calculator, parser, models, view model and a rendered-receipt OCR round trip.
 
