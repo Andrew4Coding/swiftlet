@@ -1,7 +1,7 @@
 ---
 id: 0004
 title: Split bill with receipt scanning
-status: approved
+status: in-progress
 owner: andrew4coding
 targets: [app]
 created: 2026-11-14
@@ -23,16 +23,16 @@ Let the user split a bill they paid with other people, either equally or by assi
 
 ## Acceptance criteria
 
-- [ ] **AC1**: Given a total and N people, when split equally, then the shares sum exactly to the total and differ by at most Rp1.
-- [ ] **AC2**: Given items assigned to people plus service, tax and discount, when split by items, then extras are shared in proportion to each person's item subtotal and the shares sum exactly to the bill total.
-- [ ] **AC3**: Given an item with no assignee, when the user reviews the split, then the unassigned amount is shown and saving is disabled until it is zero.
-- [ ] **AC4**: Given a receipt photo, when scanned, then items, service, tax, discount and total are filled in and every field stays editable.
+- [x] **AC1**: Given a total and N people, when split equally, then the shares sum exactly to the total and differ by at most Rp1. (SplitCalculatorTests)
+- [x] **AC2**: Given items assigned to people plus service, tax and discount, when split by items, then extras are shared in proportion to each person's item subtotal and the shares sum exactly to the bill total. (SplitCalculatorTests, SplitBillViewModelTests)
+- [x] **AC3**: Given an item with no assignee, when the user reviews the split, then the unassigned amount is shown and saving is disabled until it is zero. (manual, plus SplitBillViewModelTests)
+- [x] **AC4**: Given a receipt photo, when scanned, then items, service, tax, discount and total are filled in and every field stays editable. (manual in the simulator, plus ReceiptScannerTests)
 - [ ] **AC5**: Given scanned values that do not add up (items vs subtotal, or subtotal and extras vs total), when reviewing, then the mismatch is shown with its amount.
-- [ ] **AC6**: Given Indonesian price formats (`45.000`, `1.234.567`, `45.000,00`, `Rp45000`), when parsed, then the correct whole-rupiah value is read.
-- [ ] **AC7**: Given a saved split, when stats are computed, then the linked transaction amount is the user's share only.
-- [ ] **AC8**: Given a saved split paid from a wallet, when the wallet balance is computed, then it is reduced by the full amount paid until others settle, and rises as shares are settled.
+- [x] **AC6**: Given Indonesian price formats (`45.000`, `1.234.567`, `45.000,00`, `Rp45000`), when parsed, then the correct whole-rupiah value is read. (ReceiptParserTests)
+- [x] **AC7**: Given a saved split, when stats are computed, then the linked transaction amount is the user's share only. (manual in the simulator, plus SplitBillViewModelTests)
+- [x] **AC8**: Given a saved split paid from a wallet, when the wallet balance is computed, then it is reduced by the full amount paid until others settle, and rises as shares are settled. (manual in the simulator, plus SplitModelTests)
 - [ ] **AC9**: Given an outstanding share, when the user records a partial or full payment, then the outstanding amount updates and cannot go below zero or above what is owed.
-- [ ] **AC10**: Given Apple Intelligence is unavailable, when scanning, then the deterministic parser still produces items without the on-device model.
+- [x] **AC10**: Given Apple Intelligence is unavailable, when scanning, then the deterministic parser still produces items without the on-device model. (deterministic parser runs first and alone when the numbers add up (ReceiptScannerTests))
 - [ ] **AC11**: Given outstanding shares, when the user taps remind, then a prefilled message with the amount is offered through the share sheet.
 
 Calculator and parser criteria (AC1, AC2, AC5, AC6) are covered by unit tests. The rest are manual checks.
@@ -84,4 +84,12 @@ The paying transaction amount is the user's share. Money is whole rupiah, comput
 
 ## Implementation notes
 
-Filled during and after build by the `codebase-sync` skill.
+Main types:
+
+- `Services/Split/SplitCalculator` (integer equal, proportional and itemized splitting), `ReceiptParser` and `ReceiptMath` (text to items, plus the add-up check), `ReceiptScanner` (Vision `RecognizeDocumentsRequest`, rows rebuilt from text positions), `ReceiptModelParser` (Foundation Models fallback, used only when the deterministic result does not add up).
+- Models `SplitBill`, `SplitItem`, `SplitShare`, `SplitPerson`. `Transaction.splitBill` links the paying transaction, whose amount is the user's share. `Wallet.balance` subtracts what others still owe.
+- `ViewModels/SplitBillViewModel` and `Views/Split/` (editor steps, Splits list, detail with settlement). Entry is the Splits button in the Home toolbar.
+
+Tests: `SwiftletTests` (new target) covers the calculator, parser, models, view model and a rendered-receipt OCR round trip.
+
+Not yet verified by hand or test (left unticked): AC5 (the mismatch banner is unit tested but was not seen on screen), AC9 (part payment sheet), AC11 (reminder share sheet). OCR was only run on a clean rendered receipt, not on real crumpled photos.
