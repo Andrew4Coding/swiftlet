@@ -106,8 +106,6 @@ struct AccountView: View {
             }
         } header: {
             Text("Import")
-        } footer: {
-            Text("Add transactions from a JSON file exported on the Transactions tab. Existing transactions are kept, and exact duplicates are skipped.")
         }
 
         Section {
@@ -120,7 +118,7 @@ struct AccountView: View {
         } header: {
             Text("Data")
         } footer: {
-            Text("Reset clears every transaction and custom category on this device but keeps you signed in and restores the default categories. \(deleteFooterText)")
+            Text(deleteFooterText)
         }
         .confirmationDialog(
             "Reset all data?",
