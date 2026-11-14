@@ -22,6 +22,7 @@ struct AddTransactionView: View {
     @State private var isPresentingWalletEditor = false
     @State private var walletEditorAssignsDestination = false
     @State private var saveAttempts = 0
+    @State private var isShowingDetails = false
 
     init(transaction: Transaction? = nil) {
         let viewModel = transaction.map(AddTransactionViewModel.init(editing:)) ?? AddTransactionViewModel()
@@ -53,10 +54,8 @@ struct AddTransactionView: View {
 
                 VStack(spacing: 14) {
                     walletRows
-                    detailsRow
                     AmountKeypad(calculator: calculator)
-                    PrimaryActionButton(title: viewModel.isEditing ? "Save" : "Done", action: save)
-                        .opacity(viewModel.isValid ? 1 : 0.6)
+                    DSButton("Next", action: next)
                         .sensoryFeedback(.error, trigger: saveAttempts)
                 }
                 .padding(.horizontal, 20)
@@ -64,6 +63,16 @@ struct AddTransactionView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationTitle(viewModel.isEditing ? "Edit Transaction" : "")
+            .navigationDestination(isPresented: $isShowingDetails) {
+                TransactionDetailsStepView(
+                    viewModel: viewModel,
+                    receiptPhotoItem: $receiptPhotoItem,
+                    saveAttempts: saveAttempts,
+                    onTakePhoto: { isPresentingCamera = true },
+                    onViewReceipt: { isPresentingReceiptViewer = true },
+                    onSave: save
+                )
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", systemImage: "xmark") { dismiss() }
@@ -148,7 +157,7 @@ struct AddTransactionView: View {
             if let message = viewModel.errorMessage {
                 Text(message)
                     .font(.footnote)
-                    .foregroundStyle(AppTheme.expense)
+                    .foregroundStyle(.ds(.expense))
                     .transition(.opacity)
             }
         }
@@ -166,21 +175,14 @@ struct AddTransactionView: View {
                 onReorder: { viewModel.reorderCategories($0, context: modelContext) }
             )
         } label: {
-            HStack(spacing: 6) {
+            DSChip(
+                title: viewModel.selectedCategory?.name ?? "Select category",
+                isPlaceholder: viewModel.selectedCategory == nil
+            ) {
                 if viewModel.selectedCategory != nil {
-                    CategoryBadgeView(category: viewModel.selectedCategory, size: 24)
+                    CategoryBadgeView(category: viewModel.selectedCategory, size: 22)
                 }
-                Text(viewModel.selectedCategory?.name ?? "Select category")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(viewModel.selectedCategory == nil ? .secondary : .primary)
-                Image(systemName: "chevron.down")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
             }
-            .padding(.leading, viewModel.selectedCategory == nil ? 14 : 6)
-            .padding(.trailing, 12)
-            .padding(.vertical, 6)
-            .background(Color(.tertiarySystemFill), in: Capsule())
         }
         .buttonStyle(.plain)
     }
@@ -195,7 +197,7 @@ struct AddTransactionView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(Color(.tertiarySystemFill), in: Capsule())
+        .background(Color.ds(.surfaceMuted), in: Capsule())
     }
 
     @ViewBuilder
@@ -220,55 +222,24 @@ struct AddTransactionView: View {
         }
     }
 
-    private var detailsRow: some View {
-        HStack(spacing: 8) {
-            DatePicker("Date", selection: $viewModel.date, displayedComponents: .date)
-                .labelsHidden()
-                .fixedSize()
-
-            NavigationLink {
-                TransactionExtraDetailsView(
-                    viewModel: viewModel,
-                    receiptPhotoItem: $receiptPhotoItem,
-                    titlePlaceholder: viewModel.selectedCategory?.name ?? "Title",
-                    onTakePhoto: { isPresentingCamera = true },
-                    onViewReceipt: { isPresentingReceiptViewer = true }
-                )
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: viewModel.receiptImageData == nil ? "square.and.pencil" : "paperclip")
-                    Text(detailsSummary)
-                        .lineLimit(1)
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                }
-                .font(.subheadline)
-                .padding(.horizontal, 12)
-                .frame(height: 34)
-                .background(Color(.tertiarySystemFill), in: Capsule())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var detailsSummary: String {
-        let title = viewModel.title.trimmingCharacters(in: .whitespaces)
-        if !title.isEmpty {
-            return title
-        }
-        return viewModel.receiptImageData == nil ? "Add title, note, bill" : "Bill attached"
-    }
-
     private func presentWalletEditor(forDestination: Bool) {
         walletEditorAssignsDestination = forDestination
         isPresentingWalletEditor = true
     }
 
-    private func save() {
+    private func next() {
         calculator.equals()
         viewModel.amountText = NSDecimalNumber(decimal: calculator.finalValue).stringValue
+        if let message = viewModel.validationMessage {
+            withAnimation { viewModel.errorMessage = message }
+            saveAttempts += 1
+            return
+        }
+        viewModel.errorMessage = nil
+        isShowingDetails = true
+    }
+
+    private func save() {
         if viewModel.save(context: modelContext) {
             dismiss()
         } else {
@@ -282,7 +253,7 @@ private struct BlinkingCaret: View {
 
     var body: some View {
         Capsule()
-            .fill(Color.accentColor)
+            .fill(Color.ds(.accent))
             .frame(width: 3, height: 44)
             .opacity(isVisible ? 1 : 0)
             .animation(.easeInOut(duration: 0.55).repeatForever(), value: isVisible)
