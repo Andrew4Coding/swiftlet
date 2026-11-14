@@ -30,7 +30,7 @@ Detection runs in the host app, not the share extension: extensions have a tight
 
 - [ ] **AC1**: Given an image shared from the share extension, when Add Transaction opens, then OCR and amount detection start automatically and the keypad stays usable meanwhile.
 - [ ] **AC2**: Given a payment proof showing a total paid, when detection succeeds, then the amount display is filled with that value as whole rupiah, and the Next button is enabled.
-- [ ] **AC3**: Given the proof also shows fees, admin charges, balance, or a reference number, when detection runs, then only the amount actually paid (the final total) is chosen.
+- [x] **AC3**: Given the proof also shows fees, admin charges, balance, or a reference number, when detection runs, then only the amount actually paid (the final total) is chosen.
 - [ ] **AC4**: Given the user has already typed an amount before detection finishes, when detection completes, then the typed amount is not overwritten.
 - [ ] **AC5**: Given detection finds nothing, the model is unavailable, or OCR finds no text, when it completes, then the amount stays empty with no error shown.
 - [ ] **AC6**: Given the amount was auto-filled, when the user views the amount, then a small "Detected from image" label shows beneath it and disappears once the user edits the amount.
@@ -40,12 +40,12 @@ Detection runs in the host app, not the share extension: extensions have a tight
 
 Category and speed:
 
-- [ ] **AC10**: Given a proof that names a merchant, when detection succeeds and the type is expense with no category chosen, then the category the classifier picks among the user's expense-applicable categories is selected.
-- [ ] **AC11**: Given the user already chose a category, or switched the type away from expense, before detection finishes, then the detected category is not applied.
+- [x] **AC10**: Given a proof that names a merchant, when detection succeeds and the type is expense with no category chosen, then the category the classifier picks among the user's expense-applicable categories is selected.
+- [x] **AC11**: Given the user already chose a category, or switched the type away from expense, before detection finishes, then the detected category is not applied.
 - [ ] **AC12**: Given the classifier is not confident or the merchant is unknown, then no category is selected (never "Other" by default).
-- [ ] **AC13**: Given the proof shows a labelled total and a labelled merchant, when detection runs, then no Foundation Models call is made.
-- [ ] **AC14**: Given a rendered proof image, when the full pipeline runs (OCR, amount, merchant, category), then amount and category match the image. (test, with the model unavailable)
-- [ ] **AC15**: A model-supplied merchant is discarded unless it appears in the OCR text.
+- [x] **AC13**: Given the proof shows a labelled total and a labelled merchant, when detection runs, then no Foundation Models call is made.
+- [x] **AC14**: Given a rendered proof image, when the full pipeline runs (OCR, amount, merchant, category), then amount and category match the image. (test, with the model unavailable)
+- [x] **AC15**: A model-supplied merchant is discarded unless it appears in the OCR text.
 
 ## UX
 
@@ -84,6 +84,8 @@ none. No schema change. `AmountDetector` result is held in view state only.
 
 ## Implementation notes
 
-Built: `PaidAmountDetector` (tests in `PaidAmountDetectorTests`: parsing, keyword fallback, range validation, model answer must appear in text). AC7 and AC9 are covered by those tests. AC1 to AC6 and AC8 are UI or on-device model behaviour and still need a manual check on a device with Apple Intelligence, so the spec stays in-progress.
+Built: `PaymentProofReader` (OCR rows, keyword amount and merchant, model fallback, hallucination guards), `PaidAmountDetector` (parsing helpers), `PaymentCategoryResolver`, and `AddTransactionViewModel.applyDetectedCategory`. Tests: `PaidAmountDetectorTests`, `PaymentProofReaderTests` (including a rendered-image pipeline from OCR to category, and an injected fake model that proves no model call for clear proofs and rejects invented values). Ticked criteria are covered by those tests. AC12 is only partly covered (the test checks Other is never chosen, not that the model-fallback always abstains). AC1, 2, 4, 5, 6, 8 are UI behaviour that still needs a manual check on a device with Apple Intelligence, so the spec stays in-progress.
+
+Speed: in the simulator `RecognizeTextRequest` and `RecognizeDocumentsRequest` took the same time (about 0.9 s on a 900 px image) and returned identical text, so OCR kept the existing `ReceiptScanner` path. The win is skipping the model call when the proof is clearly labelled.
 
 Original plan: `Services/Transaction/PaidAmountDetector.swift` (`nonisolated` enum: `detect(imageData:) async -> Int?`, Foundation Models `@Generable` result plus a deterministic keyword fallback), a `detectAmount` hook on `AddTransactionViewModel` called from `AddTransactionView.init(receiptImageData:)`'s `.task`, and unit tests for the fallback parser and validation.
