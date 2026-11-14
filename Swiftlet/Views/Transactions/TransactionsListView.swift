@@ -37,15 +37,17 @@ struct TransactionsListView: View {
                                 try? modelContext.save()
                             } label: {
                                 Label("Delete", systemImage: "trash")
+                                    .labelStyle(.iconOnly)
                             }
                             .tint(.red)
 
                             Button {
                                 editingTransaction = transaction
                             } label: {
-                                Label("Edit", systemImage: "pencil")
+                                Image.swipeIcon("pencil")
                             }
-                            .tint(.blue)
+                            .accessibilityLabel("Edit")
+                            .tint(Color.ds(.accentFill))
                         }
                     }
                     .onDelete(perform: delete)
@@ -78,16 +80,7 @@ struct TransactionsListView: View {
                         Label("Export", systemImage: "square.and.arrow.up")
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isPresentingAdd = true
-                    } label: {
-                        Label("Add Transaction", systemImage: "plus")
-                    }
-                    .buttonStyle(.glassProminent)
-                    .tint(Color.ds(.accentFill))
-                    .foregroundStyle(Color.ds(.onAccent))
-                }
+                ToolbarAddButton(title: "Add Transaction") { isPresentingAdd = true }
             }
             .fileExporter(
                 isPresented: $viewModel.isPresentingExporter,

@@ -43,9 +43,7 @@ struct CategoryListView: View {
         }
         .navigationTitle("Categories")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("New Category", systemImage: "plus") { editorTarget = .new }
-            }
+            ToolbarAddButton(title: "New Category") { editorTarget = .new }
         }
         .sheet(item: $editorTarget) { target in
             CustomCategoryEditorView(editing: target.category)
@@ -91,8 +89,10 @@ struct CategoryListView: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .swipeActions(edge: .trailing) {
-            Button("Delete", systemImage: "trash", role: .destructive) {
+            Button(role: .destructive) {
                 pendingDeletion = category
+            } label: {
+                Label("Delete", systemImage: "trash").labelStyle(.iconOnly)
             }
             .tint(.red)
         }

@@ -65,9 +65,7 @@ struct RecurringListView: View {
         }
         .navigationTitle("Recurring")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("New Recurring", systemImage: "plus") { editorTarget = .new }
-            }
+            ToolbarAddButton(title: "New Recurring") { editorTarget = .new }
         }
         .sheet(item: $editorTarget) { target in
             RecurringEditorView(rule: target.rule)

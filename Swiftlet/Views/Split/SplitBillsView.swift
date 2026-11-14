@@ -44,12 +44,7 @@ struct SplitBillsView: View {
         .background(Color.ds(.canvas))
         .navigationTitle("Splits")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Split a bill", systemImage: "plus") { isPresentingEditor = true }
-                    .buttonStyle(.glassProminent)
-                    .tint(Color.ds(.accentFill))
-                    .foregroundStyle(Color.ds(.onAccent))
-            }
+            ToolbarAddButton(title: "Split a bill") { isPresentingEditor = true }
         }
         .sheet(isPresented: $isPresentingEditor) {
             SplitBillEditorView()

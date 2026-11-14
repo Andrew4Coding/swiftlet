@@ -64,9 +64,7 @@ struct WalletsView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Wallets")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("New Wallet", systemImage: "plus") { editorTarget = .new }
-            }
+            ToolbarAddButton(title: "New Wallet") { editorTarget = .new }
         }
         .sheet(item: $editorTarget) { target in
             WalletEditorView(wallet: target.wallet)
@@ -97,9 +95,11 @@ struct WalletsView: View {
         .buttonStyle(.plain)
         .swipeActions(edge: .trailing) {
             if isEmpty(wallet) {
-                Button("Delete", systemImage: "trash", role: .destructive) {
+                Button(role: .destructive) {
                     modelContext.delete(wallet)
                     try? modelContext.save()
+                } label: {
+                    Label("Delete", systemImage: "trash").labelStyle(.iconOnly)
                 }
                 .tint(.red)
             }
