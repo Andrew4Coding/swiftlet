@@ -11,17 +11,10 @@ struct ToolbarAddButton: ToolbarContent {
 
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
-            Button(action: action) {
-                Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(Color.ds(.onAccent))
-                    .frame(width: 34, height: 34)
-                    .background(Color.ds(.accentFill), in: Circle())
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(title)
+            Button(title, systemImage: "plus", action: action)
+                .buttonStyle(.glassProminent)
+                .tint(Color.ds(.accentFill))
+                .foregroundStyle(Color.ds(.onAccent))
         }
-        .sharedBackgroundVisibility(.hidden)
     }
 }

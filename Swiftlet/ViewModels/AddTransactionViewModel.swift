@@ -171,14 +171,6 @@ final class AddTransactionViewModel {
     /// Persists a new top-to-bottom order for the given (visible) categories by rewriting their
     /// `sortIndex`. Categories not in the list keep their relative order after these.
     func reorderCategories(_ ordered: [TransactionCategory], context: ModelContext) {
-        let visibleIDs = Set(ordered.map(\.persistentModelID))
-        let others = ((try? context.fetch(FetchDescriptor<TransactionCategory>())) ?? [])
-            .filter { !visibleIDs.contains($0.persistentModelID) }
-            .sorted { $0.sortIndex < $1.sortIndex }
-
-        for (index, category) in (ordered + others).enumerated() where category.sortIndex != index {
-            category.sortIndex = index
-        }
-        try? context.save()
+        TransactionCategory.reorder(ordered, context: context)
     }
 }

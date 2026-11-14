@@ -27,6 +27,7 @@ struct RecurringEditorView: View {
     @State private var isShowingDetails = false
     @State private var errorMessage: String?
     @State private var saveAttempts = 0
+    @State private var categoryEditor: CategoryEditorTarget?
 
     init(rule: RecurringTransaction? = nil) {
         self.rule = rule
@@ -44,7 +45,9 @@ struct RecurringEditorView: View {
     }
 
     private var eligibleCategories: [TransactionCategory] {
-        categories.filter { $0.appliesTo.allows(type) }
+        categories
+            .filter { $0.appliesTo.allows(type) }
+            .sorted { ($0.sortIndex, $0.name) < ($1.sortIndex, $1.name) }
     }
 
     private var wallets: [Wallet] {
@@ -100,6 +103,12 @@ struct RecurringEditorView: View {
             .task {
                 if wallet == nil { wallet = wallets.first }
             }
+            .sheet(item: $categoryEditor) { target in
+                CustomCategoryEditorView(
+                    editing: target.category,
+                    defaultScope: type == .income ? .income : .expense
+                ) { category = $0 }
+            }
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
@@ -133,19 +142,23 @@ struct RecurringEditorView: View {
     }
 
     private var categoryChip: some View {
-        Menu {
-            Button("None") { category = nil }
-            Divider()
-            ForEach(eligibleCategories) { option in
-                Button {
-                    category = option
-                } label: {
-                    Text(option.name)
-                    if option.persistentModelID == category?.persistentModelID {
-                        Image(systemName: "checkmark")
-                    }
-                }
-            }
+        NavigationLink {
+            CategoryPickerListView(
+                categories: eligibleCategories,
+                selection: $category,
+                onCreateNew: { categoryEditor = .new },
+                onEdit: { categoryEditor = .edit($0) },
+                onDelete: { deleted in
+                    if category?.persistentModelID == deleted.persistentModelID { category = nil }
+                    modelContext.delete(deleted)
+                    try? modelContext.save()
+                },
+                onTogglePin: { pinned in
+                    pinned.isPinned.toggle()
+                    try? modelContext.save()
+                },
+                onReorder: { TransactionCategory.reorder($0, context: modelContext) }
+            )
         } label: {
             DSChip(
                 title: category?.name ?? "Select category",
