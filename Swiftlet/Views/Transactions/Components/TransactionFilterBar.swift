@@ -27,10 +27,10 @@ struct TransactionFilterBar: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
                             .background(
-                                selectedPeriod == option ? Color.accentColor : Color(.systemGray6),
+                                selectedPeriod == option ? Color.ds(.accentFill) : Color(.systemGray6),
                                 in: Capsule()
                             )
-                            .foregroundStyle(selectedPeriod == option ? .white : .primary)
+                            .foregroundStyle(selectedPeriod == option ? Color.ds(.onAccent) : Color.primary)
                     }
                     .buttonStyle(.plain)
                 }
