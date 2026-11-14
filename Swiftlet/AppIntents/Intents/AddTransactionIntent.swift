@@ -70,7 +70,7 @@ struct AddTransactionIntent: AppIntent {
     }
 
     /// Picks one of the user's real categories, restricted to those that apply to `type`.
-    /// Asks the on-device model first, then keyword-matches the title, then falls back to "Other".
+    /// Asks the trained Core ML classifier first, then the on-device language model, then keyword-matches the title, then falls back to "Other".
     @MainActor
     private func resolveCategory(
         title: String,
@@ -81,10 +81,17 @@ struct AddTransactionIntent: AppIntent {
         let eligible = all.filter { $0.appliesTo.allows(type) }
         guard !eligible.isEmpty else { return nil }
 
+        let names = eligible.map(\.name)
+
+        if let guess = TransactionCategoryModel.classify(title: title, among: names),
+           let match = eligible.first(where: { $0.name == guess }) {
+            return match
+        }
+
         if let guess = await CategoryClassifier.classify(
             title: title,
             type: type,
-            among: eligible.map(\.name)
+            among: names
         ), let match = eligible.first(where: { $0.name == guess }) {
             return match
         }
