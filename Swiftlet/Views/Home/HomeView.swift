@@ -48,6 +48,13 @@ struct HomeView: View {
             }
             .background(Color.ds(.canvas))
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        SplitBillsView()
+                    } label: {
+                        Label("Splits", systemImage: "person.2.fill")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add Transaction", systemImage: "plus") { isPresentingAdd = true }
                         .buttonStyle(.glassProminent)
