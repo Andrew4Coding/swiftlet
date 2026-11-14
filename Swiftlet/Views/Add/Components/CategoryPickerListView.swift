@@ -83,11 +83,6 @@ struct CategoryPickerListView: View {
                     Text(category.name)
                         .font(.body.weight(.medium))
                         .foregroundStyle(.primary)
-                    if let purpose = category.purpose {
-                        Text(purpose.displayName)
-                            .font(.caption)
-                            .foregroundStyle(Color(hex: purpose.colorHex))
-                    }
                 }
                 Spacer()
                 if selection?.persistentModelID == category.persistentModelID {
