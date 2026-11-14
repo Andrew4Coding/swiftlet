@@ -1,7 +1,7 @@
 ---
 id: 0002
 title: Mint ink redesign and simpler flows
-status: in-progress
+status: implemented
 owner: Andrew Devito Aryo
 targets: [app]
 created: 2026-11-14
@@ -24,13 +24,13 @@ Approved directly by the owner in the request that started this work.
 
 ## Acceptance criteria
 
-- [ ] **AC1**: Given the Home screen, when it loads, then no budget card, 50/30/20 card or budget insight banner is shown.
-- [ ] **AC2**: Given the category editor, when creating or editing an expense category, then there is no Purpose or Monthly Budget field, and saving keeps any existing values untouched.
-- [ ] **AC3**: Given the Account tab, when it loads, then there are no Wallets, Budgets or Recurring & Subscriptions rows. Wallets stay reachable from Home's "See all"; recurring stays reachable from Home's upcoming card.
-- [ ] **AC4**: Given any screen, when it renders, then no linear or radial gradient is drawn; backgrounds are plain and the accent is mint.
-- [ ] **AC5**: Given the add sheet, when the amount, wallet and category are valid and the user taps **Next**, then a details step opens with title, note, date and bill, and a primary button that saves.
-- [ ] **AC6**: Given the add sheet, when something required is missing and the user taps **Next**, then the step does not advance and the reason is shown with error haptics.
-- [ ] **AC7**: Given the `DesignSystem/` folder, then colours, typography and elevation are exposed as tokens and every primary button uses `DSButton`.
+- [x] **AC1**: Given the Home screen, when it loads, then no budget card, 50/30/20 card or budget insight banner is shown.
+- [x] **AC2**: Given the category editor, when creating or editing an expense category, then there is no Purpose or Monthly Budget field, and saving keeps any existing values untouched.
+- [x] **AC3**: Given the Account tab, when it loads, then there are no Wallets, Budgets or Recurring & Subscriptions rows. Wallets stay reachable from Home's "See all"; recurring stays reachable from Home's upcoming card.
+- [x] **AC4**: Given any screen, when it renders, then no linear or radial gradient is drawn; backgrounds are plain and the accent is mint.
+- [x] **AC5**: Given the add sheet, when the amount, wallet and category are valid and the user taps **Next**, then a details step opens with title, note, date and bill, and a primary button that saves.
+- [x] **AC6**: Given the add sheet, when something required is missing and the user taps **Next**, then the step does not advance and the reason is shown with error haptics.
+- [x] **AC7**: Given the `DesignSystem/` folder, then colours, typography and elevation are exposed as tokens and every primary button uses `DSButton`.
 
 ## UX
 
@@ -62,4 +62,7 @@ None. `TransactionCategory.purposeRaw` and `monthlyBudget` stay in the schema (C
 
 ## Implementation notes
 
-Filled during and after build by the `codebase-sync` skill.
+- Budgeting removed: `Views/Budget`, `Services/Budget` and `PurposeBreakdownCard` deleted; purpose labels gone from `CategoryPickerListView`; onboarding slide 2 now about wallets.
+- Design system in `Swiftlet/DesignSystem/` (tokens, theme, `DSButton`, `DSSurface`, `ComponentStubs`). `PrimaryActionButton` wraps `DSButton`; `AccentColor` asset is mint 700 / mint 400.
+- Add flow: `AddTransactionView` ends in **Next** (`next()` validates via `validationMessage`), then pushes `TransactionDetailsStepView` with `navigationDestination(isPresented:)`.
+- Manual checks (no test target): verified in the iOS 26.5 simulator in light and dark mode on 2026-11-14 for sign-in, Home, Account, and add flow (empty-amount error, Next, save).
