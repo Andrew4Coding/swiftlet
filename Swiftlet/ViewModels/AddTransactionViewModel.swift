@@ -62,6 +62,16 @@ final class AddTransactionViewModel {
         }
     }
 
+    func applyDetectedCategory(merchant: String?, from allCategories: [TransactionCategory]) async {
+        guard let merchant, type == .expense, selectedCategory == nil else { return }
+        let match = await PaymentCategoryResolver.resolve(
+            merchant: merchant,
+            among: availableCategories(from: allCategories)
+        )
+        guard let match, type == .expense, selectedCategory == nil else { return }
+        selectedCategory = match
+    }
+
     @MainActor
     func assignDefaultWallets(context: ModelContext) {
         if wallet == nil {
