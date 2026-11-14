@@ -37,9 +37,9 @@ When splitting a bill by items, let the user describe who had what in plain lang
 
 ## UX
 
-Where: the "Who had what" section of the People step, only in By items mode. A multi-line text field with placeholder `Andrew beli 2 nasi goreng, Abe beli 3 es teh`, a short hint under it, and a **Preview** button. Chips remain as the manual way to assign and to fix leftovers.
+Where: the "Who had what" section of the People step, only in By items mode. A multi-line text field with placeholder `Andrew beli 2 nasi goreng, Abe beli 3 es teh`, and a **Generate** button. Chips remain as the manual way to assign and to fix leftovers.
 
-Flow: type → Preview → a sheet listing people and matched items (with units), warnings for unmatched or over-claimed items → **Apply** (or Edit text to go back). Applying updates the chips and the "left to assign" amount live.
+Flow: type → **Generate**, which fills the chips and units straight away (no sheet), applies on-device model suggestions for unmatched phrases, and lists anything it could not match or over-claimed inline under the button. The "left to assign" amount updates live. The earlier preview sheet was dropped because presenting it from the list section crashed.
 
 | State | What the user sees |
 |---|---|
