@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SplitBillEditorView: View {
     enum Step: Hashable {
+        case crop
         case items
         case people
         case review
@@ -45,6 +46,15 @@ struct SplitBillEditorView: View {
                 }
                 .navigationDestination(for: Step.self) { step in
                     switch step {
+                    case .crop:
+                        if let pendingImage = viewModel.pendingImage {
+                            ReceiptCropView(image: pendingImage) { cropped in
+                                path.removeAll { $0 == .crop }
+                                guard let data = ReceiptImage.compressedData(from: cropped) else { return }
+                                Task { await runScan(data) }
+                            }
+                            .toolbar { cancelToolbarItem }
+                        }
                     case .items:
                         SplitItemsStepView(viewModel: viewModel) { path.append(.people) }
                             .toolbar { cancelToolbarItem }
@@ -67,20 +77,15 @@ struct SplitBillEditorView: View {
             guard let item else { return }
             photoItem = nil
             Task {
-                if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data),
-                   let compressed = ReceiptImage.compressedData(from: image)
-                {
-                    await runScan(compressed)
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    startCropping(data)
                 }
             }
         }
         .fullScreenCover(isPresented: $isPresentingCamera) {
             CameraPicker { data in
                 isPresentingCamera = false
-                guard let data, let image = UIImage(data: data),
-                      let compressed = ReceiptImage.compressedData(from: image)
-                else { return }
-                Task { await runScan(compressed) }
+                if let data { startCropping(data) }
             }
         }
         .interactiveDismissDisabled(viewModel.isDirty)
@@ -180,6 +185,12 @@ struct SplitBillEditorView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Button("Cancel", systemImage: "xmark", action: requestCancel)
         }
+    }
+
+    private func startCropping(_ data: Data) {
+        guard let image = ReceiptImage.upright(from: data) else { return }
+        viewModel.pendingImage = image
+        path.append(.crop)
     }
 
     private func requestCancel() {
