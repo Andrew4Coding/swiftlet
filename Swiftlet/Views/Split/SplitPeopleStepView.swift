@@ -26,8 +26,6 @@ struct SplitPeopleStepView: View {
                 Section {
                     ReceiptPreviewButton(imageData: data)
                         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                } footer: {
-                    Text("Check who had what against the receipt. Tap the photo to enlarge it.")
                 }
             }
 
@@ -53,8 +51,6 @@ struct SplitPeopleStepView: View {
                     }
                 } header: {
                     Text("Who had what")
-                } footer: {
-                    Text("An item shared by several people is split evenly between them. Tapping a name resets typed quantities on that item.")
                 }
             }
 
@@ -145,9 +141,7 @@ struct SplitPeopleStepView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(item.name.isEmpty ? "Item" : item.name)
                     .font(.body.weight(.medium))
-                if item.quantity > 1 {
-                    Text("×\(item.quantity)").foregroundStyle(.secondary)
-                }
+                Text("×\(item.quantity)").foregroundStyle(.secondary)
                 Spacer()
                 Text(item.price.rupiah).monospacedDigit().foregroundStyle(.secondary)
             }
@@ -166,10 +160,6 @@ struct SplitPeopleStepView: View {
                         viewModel.toggle(participant.id, on: item.id)
                     }
                 }
-                Button("Everyone") { viewModel.assignEveryone(to: item.id) }
-                    .font(.subheadline.weight(.medium))
-                    .frame(minHeight: 44)
-                    .padding(.horizontal, 6)
             }
         }
         .padding(.vertical, 4)
