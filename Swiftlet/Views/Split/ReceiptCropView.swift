@@ -44,7 +44,7 @@ struct ReceiptCropView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .background(.bar)
+            .background(Color.ds(.canvas))
         }
         .background(Color.ds(.canvas))
         .navigationTitle("Crop receipt")

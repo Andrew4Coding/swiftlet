@@ -62,7 +62,7 @@ struct SplitPeopleStepView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 8)
-            .background(.bar)
+            .background(Color.ds(.canvas))
         }
         .scrollDismissesKeyboard(.interactively)
     }
