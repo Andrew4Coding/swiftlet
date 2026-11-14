@@ -35,7 +35,7 @@ struct RootTabView: View {
                 AccountView()
             }
 
-            Tab("Ask", systemImage: "sparkles", value: 4, role: .search) {
+            Tab("Ask", systemImage: "sparkles", value: 4) {
                 ChatView()
             }
         }
