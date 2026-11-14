@@ -12,7 +12,6 @@ struct SplitBillDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @State private var paymentTarget: SplitShare?
     @State private var isConfirmingDelete = false
     @State private var isEditing = false
 
@@ -39,6 +38,7 @@ struct SplitBillDetailView: View {
                     Button("Delete split", systemImage: "trash", role: .destructive) {
                         isConfirmingDelete = true
                     }
+                    .tint(.red)
                 } label: {
                     Label("More", systemImage: "ellipsis")
                 }
@@ -46,10 +46,6 @@ struct SplitBillDetailView: View {
         }
         .sheet(isPresented: $isEditing) {
             SplitBillEditorView(editing: bill)
-        }
-        .sheet(item: $paymentTarget) { share in
-            RecordPaymentSheet(share: share)
-                .presentationDetents([.height(300)])
         }
         .confirmationDialog("Delete this split?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
             Button("Delete split", role: .destructive, action: delete)
@@ -75,7 +71,7 @@ struct SplitBillDetailView: View {
     private var peopleSection: some View {
         Section("People") {
             ForEach(bill.othersShares) { share in
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text(share.name).font(.body.weight(.medium))
                         Spacer()
@@ -83,62 +79,48 @@ struct SplitBillDetailView: View {
                             .monospacedDigit()
                             .foregroundStyle(share.isSettled ? Color.primary : Color.ds(.warning))
                     }
-
                     if share.isSettled {
-                        HStack {
-                            Label("Paid in full", systemImage: "checkmark.circle.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(Color.ds(.accent))
-                            Spacer()
-                            moreMenu(for: share)
-                        }
-                    } else {
-                        if share.settledAmount > 0 {
-                            Text("\(share.outstanding.rupiah) left to pay")
-                                .font(.subheadline)
-                                .foregroundStyle(Color.ds(.warning))
-                        }
-                        HStack(spacing: 10) {
-                            DSButton("Mark paid", systemImage: "checkmark", variant: .secondary, size: .medium, fillsWidth: false) {
-                                share.recordPayment(share.outstanding)
-                                try? modelContext.save()
-                            }
-                            moreMenu(for: share)
-                        }
+                        Label("Paid in full", systemImage: "checkmark.circle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.ds(.accent))
                     }
                 }
                 .padding(.vertical, 4)
+                .swipeActions(edge: .trailing, allowsFullSwipe: !share.isSettled) {
+                    if share.isSettled {
+                        Button("Undo payment", systemImage: "arrow.uturn.backward") { undoPayment(share) }
+                            .tint(.gray)
+                    } else {
+                        Button("Mark paid", systemImage: "checkmark") { markPaid(share) }
+                            .tint(Color.ds(.accent))
+                        ShareLink(item: share.reminderMessage(billTitle: bill.title)) {
+                            Label("Send reminder", systemImage: "paperplane")
+                        }
+                        .tint(.gray)
+                    }
+                }
+                .contextMenu {
+                    if share.isSettled {
+                        Button("Undo payment", systemImage: "arrow.uturn.backward") { undoPayment(share) }
+                    } else {
+                        Button("Mark paid", systemImage: "checkmark") { markPaid(share) }
+                        ShareLink(item: share.reminderMessage(billTitle: bill.title)) {
+                            Label("Send reminder", systemImage: "paperplane")
+                        }
+                    }
+                }
             }
         }
     }
 
-    private func moreMenu(for share: SplitShare) -> some View {
-        Menu {
-            if share.isSettled {
-                Button("Undo payment", systemImage: "arrow.uturn.backward") {
-                    share.undoSettlement()
-                    try? modelContext.save()
-                }
-            } else {
-                ShareLink(item: share.reminderMessage(billTitle: bill.title)) {
-                    Label("Send reminder", systemImage: "paperplane")
-                }
-                Button("Record part payment", systemImage: "banknote") { paymentTarget = share }
-                if share.settledAmount > 0 {
-                    Button("Undo payments", systemImage: "arrow.uturn.backward") {
-                        share.undoSettlement()
-                        try? modelContext.save()
-                    }
-                }
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.body.weight(.semibold))
-                .frame(width: 44, height: 44)
-                .background(Color.ds(.surfaceMuted), in: Circle())
-                .foregroundStyle(Color.ds(.textPrimary))
-        }
-        .accessibilityLabel("More actions for \(share.name)")
+    private func markPaid(_ share: SplitShare) {
+        share.recordPayment(share.outstanding)
+        try? modelContext.save()
+    }
+
+    private func undoPayment(_ share: SplitShare) {
+        share.undoSettlement()
+        try? modelContext.save()
     }
 
     private var itemsSection: some View {
@@ -178,62 +160,5 @@ struct SplitBillDetailView: View {
         modelContext.delete(bill)
         try? modelContext.save()
         dismiss()
-    }
-}
-
-private struct RecordPaymentSheet: View {
-    let share: SplitShare
-
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    @State private var amountText: String
-    @FocusState private var isFocused: Bool
-
-    init(share: SplitShare) {
-        self.share = share
-        _amountText = State(initialValue: String(share.outstanding))
-    }
-
-    private var amount: Int { SplitBillViewModel.wholeRupiah(amountText) }
-    private var isValid: Bool { amount > 0 && amount <= share.outstanding }
-
-    var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("\(share.name) owes \(share.outstanding.rupiah)")
-                    .dsTextStyle(.subheadline, color: .textSecondary)
-
-                HStack {
-                    Text("Rp").foregroundStyle(.secondary)
-                    AmountField(digits: $amountText)
-                        .multilineTextAlignment(.leading)
-                        .focused($isFocused)
-                        .accessibilityLabel("Payment amount")
-                }
-                .font(.title2.weight(.semibold))
-                .fieldBox()
-
-                if amount > share.outstanding {
-                    Text("That's more than they owe.").dsTextStyle(.footnote, color: .warning)
-                }
-
-                DSButton("Record payment") {
-                    share.recordPayment(amount)
-                    try? modelContext.save()
-                    dismiss()
-                }
-                .disabled(!isValid)
-            }
-            .padding(20)
-            .navigationTitle("Payment from \(share.name)")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-            .task { isFocused = true }
-            .keyboardDoneButton()
-        }
     }
 }
