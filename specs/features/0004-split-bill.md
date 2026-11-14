@@ -102,4 +102,4 @@ Tests: `SwiftletTests` (new target) covers the calculator, parser, models, view 
 
 Items step: the receipt preview scrolls away with the list, so long receipts need the full-screen viewer (or scrolling back) to cross-check; a pinned or collapsible preview is a possible follow-up. Split screens use no materials (`.bar`/`.regularMaterial` were replaced with design system colours) per CLAUDE.md.
 
-Not yet verified by hand or test (left unticked): AC5 (the mismatch banner is unit tested but was not seen on screen), AC9 (part payment sheet), AC11 (reminder share sheet). OCR was only run on a clean rendered receipt, not on real crumpled photos.
+Not yet verified by hand or test (left unticked): AC5 (the mismatch banner is unit tested but was not seen on screen), AC11 (reminder share sheet). OCR was only run on a clean rendered receipt, not on real crumpled photos.
