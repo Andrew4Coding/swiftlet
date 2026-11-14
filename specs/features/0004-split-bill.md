@@ -35,6 +35,7 @@ Let the user split a bill they paid with other people, either equally or by assi
 - [x] **AC10**: Given Apple Intelligence is unavailable, when scanning, then the deterministic parser still produces items without the on-device model. (deterministic parser runs first and alone when the numbers add up (ReceiptScannerTests))
 - [ ] **AC11**: Given outstanding shares, when the user taps remind, then a prefilled message with the amount is offered through the share sheet.
 - [x] **AC12**: Given a photo from the camera or library, when it is chosen, then the user can adjust a crop rectangle (by corner and edge handles, by moving it, or with VoiceOver adjustable actions), reset it, and only the cropped area is scanned and saved as the receipt. (manual in the simulator with the library picker, plus CropGeometryTests; camera path and VoiceOver actions not exercised)
+- [ ] **AC13**: Given a receipt photo was scanned, when the user reviews items, then the receipt photo is shown at the top of the screen above the bill name field and can be opened full screen to zoom, so items can be checked against it.
 
 Calculator, parser and crop geometry criteria (AC1, AC2, AC5, AC6, AC12) are covered by unit tests. The rest are manual checks.
 
