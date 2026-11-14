@@ -15,7 +15,9 @@ related: [0004, 0007]
 
 A chat page where the user asks questions about their own data in plain language ("How much did I spend on food this month?", "Who still owes me?", "What bills are coming up?") and gets an answer from the on-device Foundation Models model. The model never sees the whole database: it calls small read-only tools that query SwiftData and return short, pre-computed results, so it fits the small context window and never does arithmetic or date maths itself. Nothing leaves the phone.
 
-The chat lives in its own tab using the iOS 26 search role, so it is reachable from every screen without competing with the Add (+) button in Home's toolbar.
+The chat lives in its own plain tab, so it is reachable from every screen without competing with the Add (+) button in Home's toolbar. A first version used the iOS 26 search-role tab, but on a real device it rendered merged into the other tabs, so it is now an ordinary fifth tab.
+
+Replies are detailed but short: when listing money they give the date, category and title. The assistant can show receipt and bill photos inline, and can say what it can do and what the user can do in the app. It answers in the language of the user's latest message.
 
 ## User stories
 
@@ -26,7 +28,7 @@ The chat lives in its own tab using the iOS 26 search role, so it is reachable f
 
 ## Acceptance criteria
 
-- [x] **AC1**: Given the app is open, when the user looks at the tab bar, then an "Ask" tab with a sparkles icon sits at the trailing end as a search-role tab, separate from Home, Transactions, Splits and Account.
+- [x] **AC1**: Given the app is open, when the user looks at the tab bar, then an "Ask" tab with a sparkles icon shows as the fifth tab after Home, Transactions, Splits and Account, as a regular tab.
 - [x] **AC2**: Given the Ask tab is selected and the chat is empty, when it appears, then 3 to 4 suggested prompt chips show, and tapping one sends it as a message.
 - [ ] **AC3**: Given the user sends a question about spending in a category and period, when the model answers, then the figure comes from `SpendingSummaryTool` totals computed with integer rupiah, and matches the sum of the matching transactions.
 - [ ] **AC4**: Given a question like "last month" or "this week", when the tool is called, then the model passes explicit start and end dates and the session instructions include today's date.
@@ -40,8 +42,15 @@ The chat lives in its own tab using the iOS 26 search role, so it is reachable f
 - [ ] **AC12**: Given the user taps New chat, when confirmed, then history and the session are cleared and the empty state shows.
 - [ ] **AC13**: Given `SystemLanguageModel.default.availability` is not available, when the Ask tab opens, then the input is disabled and the empty state explains why (device not eligible, Apple Intelligence off, or model not ready).
 - [ ] **AC14**: Given a question the data cannot answer, when the model replies, then it says it could not find that in the user's data and does not invent figures.
-- [ ] **AC15**: Given the user writes in Indonesian, when the model answers, then the reply is in Indonesian with amounts formatted as rupiah (for example `Rp20.000`).
+- [ ] **AC15**: Given the user writes in Indonesian, when the model answers, then the reply is in Indonesian with amounts formatted as rupiah (for example `Rp 20.000`).
 - [x] **AC16**: Tools only read; no tool creates, edits or deletes data.
+- [ ] **AC17**: Given a conversation has started, when the user looks above the input bar, then a horizontally scrolling row of suggested questions is still visible, and tapping one sends it.
+- [ ] **AC18**: Given the user asks to see a receipt or bill, when `ReceiptTool` finds matching transactions or split bills with a photo, then up to 3 photos appear inline under the reply, each opening full screen, and the reply names the item, date and amount.
+- [ ] **AC19**: Given the user asks to see a receipt but none has a photo, when the tool runs, then the reply says no receipt photo was found and attaches nothing.
+- [ ] **AC20**: Given the user asks how much was spent, when `SpendingSummaryTool` runs, then the result can be grouped by category, day or wallet, and always lists the largest 3 transactions with date, category and title.
+- [ ] **AC21**: Given the user asks what the assistant can do, or what they can do in the app, when `AppInfoTool` runs, then the reply lists the questions it can answer and the actions available in the app (add a transaction, split a bill, set up recurring, manage wallets and categories, import and export), and says it cannot make changes itself.
+- [ ] **AC22**: Given the user writes in any language, when the assistant replies, then it uses the language of the latest user message; amounts still show as rupiah.
+- [ ] **AC23**: Given the user asks which categories or wallets exist, when `AppInfoTool` runs, then it returns the category and wallet names so later questions can use exact names.
 
 ## UX
 
@@ -53,7 +62,7 @@ The chat lives in its own tab using the iOS 26 search role, so it is reachable f
 | Error | Inline failure bubble with a Retry button; context overflow is handled silently (AC11) |
 | Unavailable | Input disabled, empty state explains the reason and, where possible, points to Settings |
 
-Placement: a `Tab("Ask", systemImage: "sparkles", value: 4, role: .search)` in `RootTabView`. Not a floating button and not on Home's toolbar, which keeps Add (+). Toolbar of the chat has a New chat button. The input bar uses `safeAreaBar`.
+Placement: a regular `Tab("Ask", systemImage: "sparkles", value: 4)` in `RootTabView`. Not a floating button and not on Home's toolbar, which keeps Add (+). Once a chat has started, a scrolling row of suggested questions stays above the input bar. Toolbar of the chat has a New chat button. The input bar uses `safeAreaBar`.
 
 Design link: none yet (follow the mint ink design system; no gradients or materials beyond system glass; SF Symbols only).
 
@@ -85,7 +94,7 @@ Notes: uses only the system Foundation Models framework, so no new dependency. A
 
 ## Out of scope
 
-- Writing data from chat (adding transactions, marking splits paid). Tools are read-only in v1.
+- Writing data from chat (adding transactions, marking splits paid). Tools are read-only; the assistant describes app actions but does not perform them.
 - Persisting or syncing chat history.
 - Voice input and Siri or App Intents entry points.
 - A secondary "Ask about this" entry on Transactions or stats.
@@ -95,7 +104,9 @@ Notes: uses only the system Foundation Models framework, so no new dependency. A
 ## Open questions
 
 - Should the Ask tab hide entirely on ineligible devices instead of showing the unavailable state? Default here: show it, disabled with an explanation.
-- Is the search-role tab acceptable when the content is a chat rather than a search field? Fallback: a normal fifth tab, or a Home toolbar button opening a full-height sheet.
+- Five tabs is the maximum before iOS collapses into More. Should the chat move to a Home toolbar button opening a full-height sheet if a sixth tab is ever needed?
+- Eight tools cost context tokens in a 4k window; seven are used (receipt, app info, and the five originals). Watch for overflow on a device.
+- Should the assistant be able to perform actions (add a transaction) later, with a confirmation step?
 - How well does the on-device model pick tools and handle Indonesian phrasing? Needs a prototype with 2 tools before committing to all five.
 - Should a summary of earlier turns be generated by the model or built by rules on context overflow?
 
