@@ -1,0 +1,33 @@
+{
+  "fill": {
+    "automatic-gradient": "srgb:0.14510,0.25100,0.78820,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "2-dollar.svg",
+          "name": "2-dollar"
+        },
+        {
+          "image-name": "1-lens.svg",
+          "name": "1-lens"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
+      }
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}
