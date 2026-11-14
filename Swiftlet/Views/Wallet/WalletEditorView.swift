@@ -146,7 +146,7 @@ private struct WalletSymbolGrid: View {
                 } label: {
                     Image(systemName: symbol)
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(isSelected ? .white : Color(hex: tintHex))
+                        .foregroundStyle(isSelected ? ContrastColor.foreground(onHex: tintHex) : Color(hex: tintHex))
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                         .background(

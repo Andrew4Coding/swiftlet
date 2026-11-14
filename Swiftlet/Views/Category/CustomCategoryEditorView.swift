@@ -110,7 +110,7 @@ struct CustomCategoryEditorView: View {
                     .overlay(alignment: .bottomTrailing) {
                         Image(systemName: "plus.circle.fill")
                             .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, Color.accentColor)
+                            .foregroundStyle(Color.ds(.onAccent), Color.ds(.accentFill))
                             .font(.system(size: 20))
                             .offset(x: 4, y: 4)
                     }
