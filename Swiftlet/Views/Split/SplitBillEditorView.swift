@@ -25,6 +25,7 @@ struct SplitBillEditorView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var isPresentingCamera = false
     @State private var isConfirmingDiscard = false
+    @State private var hasAutoOpenedCamera = false
 
     private var wallets: [Wallet] {
         allWallets.filter { !$0.isArchived }
@@ -39,6 +40,7 @@ struct SplitBillEditorView: View {
             sourceStep
                 .navigationTitle("Split a bill")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar(viewModel.scanState == .scanning ? .hidden : .automatic, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel", systemImage: "xmark", action: requestCancel)
@@ -53,7 +55,6 @@ struct SplitBillEditorView: View {
                                 guard let data = ReceiptImage.compressedData(from: cropped) else { return }
                                 Task { await runScan(data) }
                             }
-                            .toolbar { cancelToolbarItem }
                         }
                     case .items:
                         SplitItemsStepView(viewModel: viewModel) { path.append(.people) }
@@ -72,7 +73,10 @@ struct SplitBillEditorView: View {
                     }
                 }
         }
-        .task { prepareDefaults() }
+        .task {
+            prepareDefaults()
+            await openCameraOnFirstAppearance()
+        }
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
             photoItem = nil
@@ -83,7 +87,7 @@ struct SplitBillEditorView: View {
             }
         }
         .fullScreenCover(isPresented: $isPresentingCamera) {
-            CameraPicker { data in
+            ReceiptCameraView { data in
                 isPresentingCamera = false
                 if let data { startCropping(data) }
             }
@@ -97,33 +101,56 @@ struct SplitBillEditorView: View {
         }
     }
 
+    @ViewBuilder
     private var sourceStep: some View {
+        if viewModel.scanState == .scanning {
+            processingStep
+        } else {
+            pickerStep
+        }
+    }
+
+    private var processingStep: some View {
+        VStack(spacing: 24) {
+            if let data = viewModel.receiptImageData, let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 420)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .accessibilityLabel("Receipt photo")
+            }
+            HStack(spacing: 10) {
+                ProgressView()
+                Text("Reading receipt…").dsTextStyle(.subheadline, color: .textSecondary)
+            }
+            .accessibilityElement(children: .combine)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.ds(.canvas))
+    }
+
+    private var pickerStep: some View {
         ScrollView {
             VStack(spacing: 20) {
                 receiptPreview
 
-                if viewModel.scanState == .scanning {
-                    DSButton("Cancel scan", variant: .tertiary) { viewModel.cancelScan() }
-                }
-
                 VStack(spacing: 12) {
-                    if CameraPicker.isAvailable {
-                        DSButton("Scan receipt", systemImage: "camera.viewfinder") {
+                    if ReceiptCameraView.isAvailable {
+                        DSButton("Take photo", systemImage: "camera.viewfinder") {
                             isPresentingCamera = true
                         }
-                        .disabled(viewModel.scanState == .scanning)
                     }
 
                     PhotosPicker(selection: $photoItem, matching: .images) {
                         Label("Choose a photo", systemImage: "photo.on.rectangle")
                     }
                     .buttonStyle(.ds(.secondary))
-                    .disabled(viewModel.scanState == .scanning)
 
                     DSButton("Enter manually", systemImage: "square.and.pencil", variant: .tertiary) {
                         path.append(.items)
                     }
-                    .disabled(viewModel.scanState == .scanning)
                 }
 
                 statusMessage
@@ -145,29 +172,7 @@ struct SplitBillEditorView: View {
                 .scaledToFit()
                 .frame(maxHeight: 280)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay {
-                    if viewModel.scanState == .scanning {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(.black.opacity(0.45))
-                        VStack(spacing: 10) {
-                            ProgressView().tint(.white)
-                            Text("Reading receipt…").font(.subheadline.weight(.medium)).foregroundStyle(.white)
-                        }
-                    }
-                }
                 .accessibilityLabel("Receipt photo")
-        } else {
-            DSSurface {
-                VStack(alignment: .leading, spacing: 8) {
-                    Image(systemName: "receipt")
-                        .font(.title)
-                        .foregroundStyle(Color.ds(.accent))
-                    Text("Scan the receipt and assign who had what.")
-                        .dsTextStyle(.headline)
-                    Text("Tax and service are shared fairly by what each person ordered.")
-                        .dsTextStyle(.subheadline, color: .textSecondary)
-                }
-            }
         }
     }
 
@@ -185,6 +190,13 @@ struct SplitBillEditorView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Button("Cancel", systemImage: "xmark", action: requestCancel)
         }
+    }
+
+    private func openCameraOnFirstAppearance() async {
+        guard !hasAutoOpenedCamera, ReceiptCameraView.isAvailable else { return }
+        hasAutoOpenedCamera = true
+        try? await Task.sleep(for: .milliseconds(350))
+        isPresentingCamera = true
     }
 
     private func startCropping(_ data: Data) {
