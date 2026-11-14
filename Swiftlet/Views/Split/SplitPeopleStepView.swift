@@ -22,6 +22,15 @@ struct SplitPeopleStepView: View {
 
     var body: some View {
         List {
+            if let data = viewModel.receiptImageData {
+                Section {
+                    ReceiptPreviewButton(imageData: data)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                } footer: {
+                    Text("Check who had what against the receipt. Tap the photo to enlarge it.")
+                }
+            }
+
             peopleSection
 
             if !viewModel.items.isEmpty {

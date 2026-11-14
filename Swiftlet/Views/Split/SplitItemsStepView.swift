@@ -9,14 +9,12 @@ struct SplitItemsStepView: View {
     @Bindable var viewModel: SplitBillViewModel
     let onNext: () -> Void
 
-    @State private var previewImage: UIImage?
-    @State private var isPresentingReceipt = false
-
     var body: some View {
         List {
-            if let previewImage {
+            if let data = viewModel.receiptImageData {
                 Section {
-                    receiptPreview(previewImage)
+                    ReceiptPreviewButton(imageData: data)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 } footer: {
                     Text("Check each item against the receipt. Tap the photo to enlarge it.")
                 }
@@ -91,37 +89,6 @@ struct SplitItemsStepView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .keyboardDoneButton()
-        .task { previewImage = viewModel.receiptImageData.flatMap(UIImage.init(data:)) }
-        .fullScreenCover(isPresented: $isPresentingReceipt) {
-            if let data = viewModel.receiptImageData {
-                ReceiptViewer(imageData: data) { isPresentingReceipt = false }
-            }
-        }
-    }
-
-    private func receiptPreview(_ image: UIImage) -> some View {
-        Button {
-            isPresentingReceipt = true
-        } label: {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: .infinity)
-                .frame(maxHeight: 240)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(alignment: .bottomTrailing) {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.footnote.weight(.semibold))
-                        .padding(8)
-                        .background(Color.ds(.surface), in: Circle())
-                        .overlay(Circle().strokeBorder(Color.ds(.border), lineWidth: 0.5))
-                        .padding(8)
-                }
-        }
-        .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-        .accessibilityLabel("Receipt photo")
-        .accessibilityHint("Opens the photo full screen")
     }
 
     private func itemRow(_ item: Binding<SplitBillViewModel.DraftItem>) -> some View {
