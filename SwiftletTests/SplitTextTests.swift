@@ -104,3 +104,72 @@ struct SplitTextMatcherTests {
         #expect(plan.assignments == [.init(person: "Andrew", itemIndex: 1, units: 3)])
     }
 }
+
+struct SplitTextAssignmentTests {
+    private func makeViewModel() -> SplitBillViewModel {
+        let viewModel = SplitBillViewModel()
+        viewModel.mode = .byItems
+        viewModel.addParticipant(name: "Andrew")
+        var rice = SplitBillViewModel.DraftItem()
+        rice.name = "Nasi Goreng"
+        rice.quantity = 2
+        rice.priceText = "60000"
+        var tea = SplitBillViewModel.DraftItem()
+        tea.name = "Es Teh"
+        tea.quantity = 5
+        tea.priceText = "50000"
+        viewModel.items = [rice, tea]
+        return viewModel
+    }
+
+    @Test func previewThenApplySplitsByUnitsAndAddsNewPeople() {
+        let viewModel = makeViewModel()
+        let preview = viewModel.previewText("Andrew beli 2 nasi goreng, Abe beli 3 es teh, aku beli 2 es teh")
+
+        #expect(preview.entries.map(\.name) == ["Andrew", "Abe", "You"])
+        #expect(preview.entries.map(\.isNew) == [false, true, false])
+        #expect(viewModel.participants.count == 2)
+
+        viewModel.applyText(preview)
+
+        #expect(viewModel.participants.map(\.name) == ["You", "Andrew", "Abe"])
+        #expect(viewModel.split.shares == [20_000, 60_000, 30_000])
+        #expect(viewModel.split.unassigned == 0)
+    }
+
+    @Test func tappingAChipResetsUnits() {
+        let viewModel = makeViewModel()
+        viewModel.applyText(viewModel.previewText("Andrew beli 2 es teh"))
+        #expect(viewModel.split.unassigned > 0)
+
+        let tea = viewModel.items[1]
+        viewModel.toggle(viewModel.participants[0].id, on: tea.id)
+        #expect(viewModel.items[1].assigneeUnits.isEmpty)
+    }
+
+    @Test func applyingTwiceReplacesThatPersonsClaim() {
+        let viewModel = makeViewModel()
+        viewModel.applyText(viewModel.previewText("Andrew beli 2 es teh, aku beli 3 es teh"))
+        viewModel.applyText(viewModel.previewText("Andrew beli 1 es teh"))
+
+        let tea = viewModel.items[1]
+        let andrew = viewModel.participants[1].id
+        #expect(tea.assigneeUnits[andrew] == 1)
+        #expect(tea.assigneeUnits[viewModel.participants[0].id] == 3)
+    }
+
+    @Test func unknownItemsAreReportedAndNothingChanges() {
+        let viewModel = makeViewModel()
+        let preview = viewModel.previewText("Andrew beli pizza")
+        #expect(preview.isEmpty)
+        #expect(preview.unmatched.map(\.phrase) == ["pizza"])
+    }
+
+    @Test func prefixMatchesUniqueParticipantOnly() {
+        let viewModel = makeViewModel()
+        #expect(viewModel.resolveParticipant(named: "And") == viewModel.participants[1].id)
+        viewModel.addParticipant(name: "Andre")
+        #expect(viewModel.resolveParticipant(named: "And") == nil)
+        #expect(viewModel.resolveParticipant(named: "andrew") == viewModel.participants[1].id)
+    }
+}

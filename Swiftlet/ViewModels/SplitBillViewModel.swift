@@ -37,6 +37,7 @@ final class SplitBillViewModel {
         var quantity = 1
         var priceText = ""
         var assigneeIDs: Set<UUID> = []
+        var assigneeUnits: [UUID: Int] = [:]
 
         var price: Int { SplitBillViewModel.wholeRupiah(priceText) }
     }
@@ -99,7 +100,11 @@ final class SplitBillViewModel {
                 items: items.map { item in
                     SplitCalculator.Item(
                         price: item.price,
-                        assignees: participants.indices.filter { item.assigneeIDs.contains(participants[$0].id) }
+                        assignees: participants.indices.filter { item.assigneeIDs.contains(participants[$0].id) },
+                        quantity: item.quantity,
+                        units: Dictionary(uniqueKeysWithValues: participants.indices.compactMap { index in
+                            item.assigneeUnits[participants[index].id].map { (index, $0) }
+                        })
                     )
                 },
                 extras: extras,
@@ -184,11 +189,13 @@ final class SplitBillViewModel {
         participants.removeAll { $0.id == id }
         for index in items.indices {
             items[index].assigneeIDs.remove(id)
+            items[index].assigneeUnits[id] = nil
         }
     }
 
     func toggle(_ participantID: UUID, on itemID: UUID) {
         guard let index = items.firstIndex(where: { $0.id == itemID }) else { return }
+        items[index].assigneeUnits = [:]
         if items[index].assigneeIDs.contains(participantID) {
             items[index].assigneeIDs.remove(participantID)
         } else {
@@ -198,6 +205,7 @@ final class SplitBillViewModel {
 
     func assignEveryone(to itemID: UUID) {
         guard let index = items.firstIndex(where: { $0.id == itemID }) else { return }
+        items[index].assigneeUnits = [:]
         items[index].assigneeIDs = Set(participants.map(\.id))
     }
 
@@ -292,12 +300,14 @@ final class SplitBillViewModel {
         }
 
         for (index, draft) in items.enumerated() {
+            let assigned = effectiveMode == .byItems ? Array(draft.assigneeIDs) : []
             let item = SplitItem(
                 name: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
                 quantity: draft.quantity,
                 price: draft.price,
                 sortIndex: index,
-                assigneeKeys: effectiveMode == .byItems ? draft.assigneeIDs.map(\.uuidString) : []
+                assigneeKeys: assigned.map(\.uuidString),
+                assigneeUnits: draft.assigneeUnits.isEmpty ? [] : assigned.map { draft.assigneeUnits[$0] ?? 0 }
             )
             context.insert(item)
             item.bill = bill
