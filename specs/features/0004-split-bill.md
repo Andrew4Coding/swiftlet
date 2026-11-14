@@ -34,7 +34,7 @@ Let the user split a bill they paid with other people, either equally or by assi
 - [ ] **AC9**: Given an outstanding share, when the user records a partial or full payment, then the outstanding amount updates and cannot go below zero or above what is owed.
 - [x] **AC10**: Given Apple Intelligence is unavailable, when scanning, then the deterministic parser still produces items without the on-device model. (deterministic parser runs first and alone when the numbers add up (ReceiptScannerTests))
 - [ ] **AC11**: Given outstanding shares, when the user taps remind, then a prefilled message with the amount is offered through the share sheet.
-- [ ] **AC12**: Given a photo from the camera or library, when it is chosen, then the user can adjust a crop rectangle (by corner and edge handles, by moving it, or with VoiceOver adjustable actions), reset it, and only the cropped area is scanned and saved as the receipt.
+- [x] **AC12**: Given a photo from the camera or library, when it is chosen, then the user can adjust a crop rectangle (by corner and edge handles, by moving it, or with VoiceOver adjustable actions), reset it, and only the cropped area is scanned and saved as the receipt. (manual in the simulator with the library picker, plus CropGeometryTests; camera path and VoiceOver actions not exercised)
 
 Calculator, parser and crop geometry criteria (AC1, AC2, AC5, AC6, AC12) are covered by unit tests. The rest are manual checks.
 
@@ -89,6 +89,7 @@ Main types:
 
 - `Services/Split/SplitCalculator` (integer equal, proportional and itemized splitting), `ReceiptParser` and `ReceiptMath` (text to items, plus the add-up check), `ReceiptScanner` (Vision `RecognizeDocumentsRequest`, rows rebuilt from text positions), `ReceiptModelParser` (Foundation Models fallback, used only when the deterministic result does not add up).
 - Models `SplitBill`, `SplitItem`, `SplitShare`, `SplitPerson`. `Transaction.splitBill` links the paying transaction, whose amount is the user's share. `Wallet.balance` subtracts what others still owe.
+- `Services/Split/CropGeometry` (pure crop maths) and `Views/Split/ReceiptCropView` (the crop screen shown after a photo is chosen or taken).
 - `ViewModels/SplitBillViewModel` and `Views/Split/` (editor steps, Splits list, detail with settlement). Entry is the Splits tab in `RootTabView`.
 
 HIG audit (2026-11-14): discarding asks for confirmation on every step and swipe-down is blocked while a draft exists, a scan can be cancelled, amounts are grouped as typed, number pads have a Done button, amount rows reflow at accessibility text sizes, and `DSButton` labels wrap there instead of truncating.
