@@ -16,9 +16,6 @@ final class SplitBill {
     var date: Date = Date.now
     var createdAt: Date = Date.now
 
-    @Attribute(.externalStorage)
-    var receiptImageData: Data?
-
     @Relationship(inverse: \Transaction.splitBill)
     var transaction: Transaction?
 
@@ -35,7 +32,6 @@ final class SplitBill {
         tax: Int = 0,
         discount: Int = 0,
         date: Date = .now,
-        receiptImageData: Data? = nil,
         createdAt: Date = .now
     ) {
         self.title = title
@@ -44,7 +40,6 @@ final class SplitBill {
         self.tax = tax
         self.discount = discount
         self.date = date
-        self.receiptImageData = receiptImageData
         self.createdAt = createdAt
     }
 
