@@ -91,6 +91,9 @@ final class Wallet {
         let incoming = (incomingTransfers ?? [])
             .filter { $0.type == .transfer }
             .reduce(Decimal(0)) { $0 + $1.amount }
-        return initialBalance + outgoing + incoming
+        let lentToOthers = (transactions ?? [])
+            .compactMap(\.splitBill)
+            .reduce(Decimal(0)) { $0 + Decimal($1.outstanding) }
+        return initialBalance + outgoing + incoming - lentToOthers
     }
 }

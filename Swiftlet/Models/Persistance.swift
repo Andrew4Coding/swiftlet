@@ -15,6 +15,10 @@ enum Persistance {
             TransactionCategory.self,
             Wallet.self,
             RecurringTransaction.self,
+            SplitBill.self,
+            SplitItem.self,
+            SplitShare.self,
+            SplitPerson.self,
         ])
 
         let config = ModelConfiguration(

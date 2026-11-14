@@ -24,6 +24,7 @@ final class Transaction {
     /// Receiving wallet; only set for `.transfer` transactions.
     var destinationWallet: Wallet?
     var recurringSource: RecurringTransaction?
+    var splitBill: SplitBill?
 
     var type: TransactionType {
         get { TransactionType(rawValue: typeRaw) ?? .expense }
