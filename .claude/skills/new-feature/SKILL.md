@@ -30,7 +30,7 @@ description: Spec-first recipe for adding a feature or screen to Swiftlet. Use w
 
 1. **Data**, if the feature persists anything: add or change the model, then check existing data still loads.
 2. **Service and view model**: logic in `Services/`, state in an `@Observable` view model.
-3. **View**: use the `AppTheme` tokens. Add strings to `Localizable.xcstrings`.
+3. **View**: use `DesignSystem` tokens and components (`ColorToken`, `.dsTextStyle`, `.dsSurface()`, `DSButton`); no gradients. Add strings to `Localizable.xcstrings`.
 4. **Navigation**: wire the view in.
 5. **Verify**: run `xcodegen generate` and build the `Swiftlet` scheme (see CLAUDE.md Commands). There are no test targets yet, so document a manual check for each acceptance criterion in the spec's Implementation notes.
 
