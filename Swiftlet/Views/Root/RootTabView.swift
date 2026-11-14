@@ -34,6 +34,10 @@ struct RootTabView: View {
             Tab("Account", systemImage: "person.crop.circle", value: 3) {
                 AccountView()
             }
+
+            Tab("Ask", systemImage: "sparkles", value: 4, role: .search) {
+                ChatView()
+            }
         }
         .onChange(of: pendingReceiptImageData) { _, newValue in
             presentSharedTransactionIfNeeded(newValue)
