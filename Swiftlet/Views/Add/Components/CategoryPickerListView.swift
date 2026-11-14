@@ -102,6 +102,7 @@ struct CategoryPickerListView: View {
             } label: {
                 Label("Delete", systemImage: "trash")
             }
+            .tint(.red)
 
             Button {
                 onEdit(category)

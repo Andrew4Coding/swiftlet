@@ -101,6 +101,7 @@ struct WalletsView: View {
                     modelContext.delete(wallet)
                     try? modelContext.save()
                 }
+                .tint(.red)
             }
             Button(wallet.isArchived ? "Unarchive" : "Archive", systemImage: wallet.isArchived ? "tray.and.arrow.up" : "archivebox") {
                 wallet.isArchived.toggle()
