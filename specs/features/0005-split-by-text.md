@@ -23,17 +23,17 @@ When splitting a bill by items, let the user describe who had what in plain lang
 
 ## Acceptance criteria
 
-- [ ] **AC1**: Given the text `Andrew beli 2 nasi goreng, Abe beli 3 es teh`, when parsed, then two people (Andrew, Abe) each get a claim with item phrase and quantity. (SplitTextParserTests)
-- [ ] **AC2**: Given quantity markers `2 x`, `2x`, `x2`, `2 biji`, `2 buah`, `2 pcs`, `2 porsi`, `2 gelas`, or a bare number next to the item, when parsed, then the quantity is 2; with no marker the quantity is 1. (SplitTextParserTests)
-- [ ] **AC3**: Given the separators comma, semicolon, newline and `dan`/`&`/`sama`, when parsed, then each separated clause is a separate claim, and `Andrew beli nasi goreng dan es teh` gives Andrew both items. (SplitTextParserTests)
-- [ ] **AC4**: Given the verbs `beli`, `pesan`, `makan`, `minum`, `order`, `ambil`, `had`, `ordered`, or a colon, when parsed, then the text before the verb is the person and the rest are items. (SplitTextParserTests)
-- [ ] **AC5**: Given an item phrase, when matched, then it resolves to the item whose name best matches it ignoring case, accents and small typos; a phrase that matches nothing is reported as unmatched and is never guessed. (SplitTextMatcherTests)
-- [ ] **AC6**: Given a claim for quantity N on an item of quantity Q, when applied, then that person is assigned N units; the item price is shared across people in proportion to units, the shares still sum exactly to the item price, and claims totalling more than Q are flagged. (SplitCalculatorTests)
-- [ ] **AC7**: Given a person name not yet in the split, when the preview is confirmed, then the person is added as a participant (reusing a known `SplitPerson` of the same name).
+- [x] **AC1**: Given the text `Andrew beli 2 nasi goreng, Abe beli 3 es teh`, when parsed, then two people (Andrew, Abe) each get a claim with item phrase and quantity. (SplitTextParserTests)
+- [x] **AC2**: Given quantity markers `2 x`, `2x`, `x2`, `2 biji`, `2 buah`, `2 pcs`, `2 porsi`, `2 gelas`, or a bare number next to the item, when parsed, then the quantity is 2; with no marker the quantity is 1. (SplitTextParserTests)
+- [x] **AC3**: Given the separators comma, semicolon, newline and `dan`/`&`/`sama`, when parsed, then each separated clause is a separate claim, and `Andrew beli nasi goreng dan es teh` gives Andrew both items. (SplitTextParserTests)
+- [x] **AC4**: Given the verbs `beli`, `pesan`, `makan`, `minum`, `order`, `ambil`, `had`, `ordered`, or a colon, when parsed, then the text before the verb is the person and the rest are items. (SplitTextParserTests)
+- [x] **AC5**: Given an item phrase, when matched, then it resolves to the item whose name best matches it ignoring case, accents and small typos; a phrase that matches nothing is reported as unmatched and is never guessed. (SplitTextMatcherTests)
+- [x] **AC6**: Given a claim for quantity N on an item of quantity Q, when applied, then that person is assigned N units; the item price is shared across people in proportion to units, the shares still sum exactly to the item price, and claims totalling more than Q are flagged. (SplitCalculatorTests)
+- [x] **AC7**: Given a person name not yet in the split, when the preview is confirmed, then the person is added as a participant (reusing a known `SplitPerson` of the same name). (SplitTextAssignmentTests)
 - [ ] **AC8**: Given a parsed result, when the preview is shown, then it lists each person with their matched items and units, lists unmatched phrases and over-claims as warnings, and nothing changes until the user taps Apply. (manual)
-- [ ] **AC9**: Given Apple Intelligence is unavailable, when the user types, then the deterministic parser alone produces the preview. When it is available and the deterministic parse leaves unmatched phrases, then the on-device model may propose matches, shown as suggestions the user can accept. (manual, plus SplitTextParserTests for the offline path)
-- [ ] **AC10**: Given text applied twice, when the second apply happens, then it replaces the first apply's assignments for the people and items it mentions and leaves other assignments untouched.
-- [ ] **AC11**: Given the field is empty or whitespace, when Preview is tapped, then it is disabled.
+- [x] **AC9**: Given Apple Intelligence is unavailable, when the user types, then the deterministic parser alone produces the preview. When it is available and the deterministic parse leaves unmatched phrases, then the on-device model may propose matches, shown as suggestions the user can accept. (manual, plus SplitTextParserTests for the offline path)
+- [x] **AC10**: Given text applied twice, when the second apply happens, then it replaces the first apply's assignments for the people and items it mentions and leaves other assignments untouched. Items that were equally shared by chips switch to the typed claims. (SplitTextAssignmentTests)
+- [x] **AC11**: Given the field is empty or whitespace, when Preview is tapped, then it is disabled.
 
 ## UX
 
@@ -79,4 +79,8 @@ New stateless helpers in `Services/Split/`, `nonisolated`: `SplitTextParser` (te
 
 ## Implementation notes
 
-Filled during and after build by the `codebase-sync` skill.
+Main types: `Services/Split/SplitTextParser` (text to claims), `SplitTextMatcher` (fuzzy item matching and the plan, including over-claims), `SplitTextModelMatcher` (Foundation Models suggestions only), `SplitBillViewModel+Text` (preview, apply, person resolution; "me", "aku", "saya" and similar map to You), `Views/Split/SplitTextAssignView` (field and preview sheet). `SplitCalculator.Item` gained `quantity` and `units`; unclaimed units stay in `unassigned`, over-claims split by units claimed.
+
+Tests: `SplitTextTests` (parser, matcher, apply) and three unit cases in `SplitCalculatorTests`.
+
+Not yet verified by hand (left unticked): AC8 (preview sheet on screen) and the model-suggestion path of AC9 (needs Apple Intelligence).
