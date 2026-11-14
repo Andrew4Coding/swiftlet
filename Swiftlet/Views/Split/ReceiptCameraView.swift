@@ -6,8 +6,10 @@
 import AVFoundation
 import SwiftUI
 
-struct ReceiptCameraView: View {
-    let onFinish: (Data?) -> Void
+struct ReceiptCameraView<Leading: View, Trailing: View>: View {
+    let onCapture: (Data) -> Void
+    @ViewBuilder var leading: Leading
+    @ViewBuilder var trailing: Trailing
 
     @State private var camera = ReceiptCameraController()
 
@@ -16,59 +18,46 @@ struct ReceiptCameraView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-
-            if camera.isDenied {
-                VStack(spacing: 16) {
-                    Image(systemName: "camera.fill")
-                        .font(.largeTitle)
-                    Text("Camera access is off. Turn it on in Settings to take a photo of the bill.")
-                        .multilineTextAlignment(.center)
+        VStack(spacing: 16) {
+            ZStack {
+                Color.black
+                if camera.isDenied {
+                    VStack(spacing: 12) {
+                        Image(systemName: "camera.fill").font(.largeTitle)
+                        Text("Camera access is off. Turn it on in Settings, or choose a photo instead.")
+                            .multilineTextAlignment(.center)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(24)
+                } else {
+                    CameraPreview(session: camera.session)
                 }
-                .foregroundStyle(.white)
-                .padding(32)
-            } else {
-                CameraPreview(session: camera.session)
-                    .ignoresSafeArea()
             }
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
-            VStack {
-                HStack {
-                    Button {
-                        onFinish(nil)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(width: 44, height: 44)
-                            .background(.black.opacity(0.45), in: Circle())
+            HStack {
+                leading.frame(maxWidth: .infinity, alignment: .leading)
+
+                Button {
+                    camera.capture { data in
+                        if let data { onCapture(data) }
                     }
-                    .accessibilityLabel("Close camera")
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-
-                Spacer()
-
-                if !camera.isDenied {
-                    Button {
-                        camera.capture { onFinish($0) }
-                    } label: {
-                        ZStack {
-                            Circle().strokeBorder(.white, lineWidth: 4).frame(width: 78, height: 78)
-                            Circle().fill(.white).frame(width: 62, height: 62)
-                        }
+                } label: {
+                    ZStack {
+                        Circle().strokeBorder(Color.ds(.textPrimary), lineWidth: 4).frame(width: 74, height: 74)
+                        Circle().fill(Color.ds(.textPrimary)).frame(width: 58, height: 58)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(!camera.isReady)
-                    .opacity(camera.isReady ? 1 : 0.5)
-                    .accessibilityLabel("Take photo")
-                    .padding(.bottom, 32)
                 }
+                .buttonStyle(.plain)
+                .disabled(!camera.isReady)
+                .opacity(camera.isReady ? 1 : 0.4)
+                .accessibilityLabel("Take photo")
+
+                trailing.frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
         .task { await camera.start() }
         .onDisappear { camera.stop() }
     }

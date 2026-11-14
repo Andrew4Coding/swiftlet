@@ -23,9 +23,7 @@ struct SplitBillEditorView: View {
     @State private var viewModel = SplitBillViewModel()
     @State private var path: [Step] = []
     @State private var photoItem: PhotosPickerItem?
-    @State private var isPresentingCamera = false
     @State private var isConfirmingDiscard = false
-    @State private var hasAutoOpenedCamera = false
 
     private var wallets: [Wallet] {
         allWallets.filter { !$0.isArchived }
@@ -73,10 +71,7 @@ struct SplitBillEditorView: View {
                     }
                 }
         }
-        .task {
-            prepareDefaults()
-            await openCameraOnFirstAppearance()
-        }
+        .task { prepareDefaults() }
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
             photoItem = nil
@@ -84,12 +79,6 @@ struct SplitBillEditorView: View {
                 if let data = try? await item.loadTransferable(type: Data.self) {
                     startCropping(data)
                 }
-            }
-        }
-        .fullScreenCover(isPresented: $isPresentingCamera) {
-            ReceiptCameraView { data in
-                isPresentingCamera = false
-                if let data { startCropping(data) }
             }
         }
         .interactiveDismissDisabled(viewModel.isDirty)
@@ -105,6 +94,8 @@ struct SplitBillEditorView: View {
     private var sourceStep: some View {
         if viewModel.scanState == .scanning {
             processingStep
+        } else if ReceiptCameraView<EmptyView, EmptyView>.isAvailable {
+            cameraStep
         } else {
             pickerStep
         }
@@ -131,18 +122,40 @@ struct SplitBillEditorView: View {
         .background(Color.ds(.canvas))
     }
 
+    private var cameraStep: some View {
+        VStack(spacing: 0) {
+            statusMessage
+                .padding(.horizontal, 20)
+            ReceiptCameraView { data in
+                startCropping(data)
+            } leading: {
+                PhotosPicker(selection: $photoItem, matching: .images) {
+                    Label("Photos", systemImage: "photo.on.rectangle")
+                        .labelStyle(.iconOnly)
+                        .font(.title2)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Choose a photo")
+            } trailing: {
+                Button {
+                    path.append(.items)
+                } label: {
+                    Label("Enter manually", systemImage: "square.and.pencil")
+                        .labelStyle(.iconOnly)
+                        .font(.title2)
+                        .frame(width: 44, height: 44)
+                }
+            }
+        }
+        .background(Color.ds(.canvas))
+    }
+
     private var pickerStep: some View {
         ScrollView {
             VStack(spacing: 20) {
                 receiptPreview
 
                 VStack(spacing: 12) {
-                    if ReceiptCameraView.isAvailable {
-                        DSButton("Take photo", systemImage: "camera.viewfinder") {
-                            isPresentingCamera = true
-                        }
-                    }
-
                     PhotosPicker(selection: $photoItem, matching: .images) {
                         Label("Choose a photo", systemImage: "photo.on.rectangle")
                     }
@@ -155,9 +168,6 @@ struct SplitBillEditorView: View {
 
                 statusMessage
 
-                Label("Receipts are read on your device and never uploaded.", systemImage: "lock.fill")
-                    .dsTextStyle(.footnote, color: .textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(20)
         }
@@ -190,13 +200,6 @@ struct SplitBillEditorView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Button("Cancel", systemImage: "xmark", action: requestCancel)
         }
-    }
-
-    private func openCameraOnFirstAppearance() async {
-        guard !hasAutoOpenedCamera, ReceiptCameraView.isAvailable else { return }
-        hasAutoOpenedCamera = true
-        try? await Task.sleep(for: .milliseconds(350))
-        isPresentingCamera = true
     }
 
     private func startCropping(_ data: Data) {
