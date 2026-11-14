@@ -27,6 +27,10 @@ struct RootTabView: View {
                 TransactionsListView()
             }
 
+            Tab("Splits", systemImage: "person.2.fill", value: 2) {
+                SplitBillsView()
+            }
+
             Tab("Account", systemImage: "person.crop.circle", value: 3) {
                 AccountView()
             }

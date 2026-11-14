@@ -21,6 +21,12 @@ struct SplitBillsView: View {
     }
 
     var body: some View {
+        NavigationStack {
+            content
+        }
+    }
+
+    private var content: some View {
         Group {
             if bills.isEmpty {
                 ContentUnavailableView {
