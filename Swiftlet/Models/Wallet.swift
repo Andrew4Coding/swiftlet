@@ -91,9 +91,18 @@ final class Wallet {
         let incoming = (incomingTransfers ?? [])
             .filter { $0.type == .transfer }
             .reduce(Decimal(0)) { $0 + $1.amount }
+        let recordedKeys = Set((transactions ?? []).compactMap { transaction -> String? in
+            guard transaction.type == .income,
+                  transaction.externalReference.hasPrefix(SplitReimbursement.referencePrefix) else { return nil }
+            return String(transaction.externalReference.dropFirst(SplitReimbursement.referencePrefix.count))
+        })
         let lentToOthers = (transactions ?? [])
             .compactMap(\.splitBill)
-            .reduce(Decimal(0)) { $0 + Decimal($1.outstanding) }
+            .flatMap { $0.othersShares }
+            .reduce(Decimal(0)) { total, share in
+                let counted = recordedKeys.contains(share.key) ? share.amount : share.outstanding
+                return total + Decimal(counted)
+            }
         return initialBalance + outgoing + incoming - lentToOthers
     }
 }
