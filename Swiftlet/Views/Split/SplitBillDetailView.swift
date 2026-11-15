@@ -121,12 +121,12 @@ struct SplitBillDetailView: View {
     }
 
     private func markPaid(_ share: SplitShare) {
-        share.recordPayment(share.outstanding)
+        SplitReimbursement.record(share, bill: bill, context: modelContext)
         try? modelContext.save()
     }
 
     private func undoPayment(_ share: SplitShare) {
-        share.undoSettlement()
+        SplitReimbursement.undo(share, context: modelContext)
         try? modelContext.save()
     }
 
