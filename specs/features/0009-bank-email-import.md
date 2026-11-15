@@ -94,4 +94,4 @@ Resolved on approval (2026-11-15) with the recommendations:
 
 Tests: `BankEmailParserTests` (AC1-5, 12-16) and `BankEmailImporterTests` (AC7-9, 11, near-duplicates, unreadable text).
 
-Still to do: AC10, a real receipt through the Shortcuts "When I get an email" automation on a device, which also settles open question 7. The intent's thrown error for AC6 has been run only through the importer tests, not in Shortcuts. New strings are not yet in `Localizable.xcstrings`; Xcode extracts them on its next build. Dana has no template yet.
+Still to do: AC10, a real receipt through the Shortcuts "When I get an email" automation on a device, which also settles open question 7. The intent's thrown error for AC6 has been run only through the importer tests, not in Shortcuts. Dana has no template yet.
