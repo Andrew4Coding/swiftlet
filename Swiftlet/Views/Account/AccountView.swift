@@ -44,6 +44,12 @@ struct AccountView: View {
             } label: {
                 ManageRow(title: "Wallets", systemImage: "wallet.bifold", detail: "\(wallets.filter { !$0.isArchived }.count)")
             }
+
+            NavigationLink {
+                EmailImportGuideView()
+            } label: {
+                ManageRow(title: "Email Import", systemImage: "envelope", detail: "")
+            }
         }
     }
 
