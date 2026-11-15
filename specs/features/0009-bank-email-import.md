@@ -1,7 +1,7 @@
 ---
 id: 0009
 title: Bank email import
-status: approved
+status: in-progress
 owner: andrew4coding
 targets: [app]
 created: 2026-11-15
@@ -25,22 +25,22 @@ Bank, e-wallet and merchant apps (BCA, BNI wondr, OVO, Grab, GoPay/Gojek, and ot
 
 Each maps to a `BankEmailParserTests` case (Swift Testing) unless marked manual.
 
-- [ ] **AC1**: Given a BCA "QRIS Payment" email with `Total Payment : IDR 56,661.00` and a `Payment to` merchant, when parsed, then the result is an expense of 56661 titled with the merchant, bank `bca`, reference from `Reference No.` (fallback `RRN`).
-- [ ] **AC2**: Given a BNI wondr QRIS email (`Nominal Rp282.150`, `Penerima` block, `Kode RRN`), when parsed, then the result is an expense of 282150 titled with the first line after `Penerima`, bank `bni`.
-- [ ] **AC3**: Given a BNI wondr e-wallet top-up email (`Penerima OVO-…`, `Total Rp200.000`, `Ref ID`), when parsed, then the result is a transfer of 200000 from the BNI wallet to the OVO wallet.
-- [ ] **AC4**: Given a merchant-side "Payment Success" notice (`Nama Merchant`, `Total Rp 30200.00`, `No Referensi`), when parsed, then the result is an income of 30200 titled with the merchant name.
-- [ ] **AC5**: Given amounts written as `IDR 56,661.00`, `Rp200.000`, `Rp 30200.00` and `Rp0`, when parsed, then each yields the exact integer rupiah (no floating point); decimals of `.00` are dropped, and `.` or `,` as thousands separators are told apart from decimals.
-- [ ] **AC6**: Given text that matches no known template, when the intent runs, then no transaction is created and Shortcuts shows "Couldn't read this email" with the sender.
-- [ ] **AC7**: Given a reference already stored on a transaction, when the same email is imported again, then no new transaction is created and the intent says it was already added.
-- [ ] **AC8**: Given the title, when the transaction is created, then the category comes from the same resolver chain as 0003 (Core ML, Foundation Models, keywords, Other); transfers get no category.
-- [ ] **AC9**: Given a parsed bank, when the wallet is chosen, then it is the wallet whose name matches that bank (case-insensitive) or, if none, the default wallet; a transfer's destination is matched the same way and the intent reports if it fell back.
-- [ ] **AC12**: Given an OVO merchant receipt (`Pembayaran Berhasil - Rp19.000`, `Nama Toko`, `Metode Pembayaran OVO Cash`, `No. Referensi`), when parsed, then the result is an expense of 19000 titled with `Nama Toko`, paid from the OVO wallet.
-- [ ] **AC13**: Given a Grab receipt (`TOTAL Rp 43060`, `Pesanan Dari: Sushi Stop`, `Jenis Kendaraan: GrabFood`, `Pesanan ID`, `OVO Cash : Rp 43060`), when parsed, then the result is an expense of 43060 (the final total after discounts, not the subtotal) titled `GrabFood · Sushi Stop`, paid from the wallet named in the payment line. For a Grab ride, the title is `GrabCar` or `GrabBike` and the pickup place is not used.
-- [ ] **AC14**: Given a GoPay GoTagihan PLN email (`Total Bayar Rp200.000`, final `Total Rp203.000`, `ID Pembayaran`), when parsed, then the result is an expense of 203000 (the final `Total`, which includes the admin fee) titled `PLN Token`, paid from the GoPay wallet because `Metode pembayaran` is blank.
-- [ ] **AC15**: Given a Gojek trip email (`Total paid Rp17.500`, `Paid with GoPay`, `Thanks for ordering GoRide`), when parsed, then the result is an expense of 17500 titled `GoRide`, paid from the GoPay wallet. It has no reference number, so the dedupe key is built from the amount, service and received date.
-- [ ] **AC16**: Given amounts with comma decimals (`Rp0,00`, `Rp5.826,00`) or none (`Rp 43060`), when parsed, then they are exact integer rupiah, and a trailing `,00` or `.00` is never read as thousands.
+- [x] **AC1**: Given a BCA "QRIS Payment" email with `Total Payment : IDR 56,661.00` and a `Payment to` merchant, when parsed, then the result is an expense of 56661 titled with the merchant, bank `bca`, reference from `Reference No.` (fallback `RRN`).
+- [x] **AC2**: Given a BNI wondr QRIS email (`Nominal Rp282.150`, `Penerima` block, `Kode RRN`), when parsed, then the result is an expense of 282150 titled with the first line after `Penerima`, bank `bni`.
+- [x] **AC3**: Given a BNI wondr e-wallet top-up email (`Penerima OVO-…`, `Total Rp200.000`, `Ref ID`), when parsed, then the result is a transfer of 200000 from the BNI wallet to the OVO wallet.
+- [x] **AC4**: Given a merchant-side "Payment Success" notice (`Nama Merchant`, `Total Rp 30200.00`, `No Referensi`), when parsed, then the result is an income of 30200 titled with the merchant name.
+- [x] **AC5**: Given amounts written as `IDR 56,661.00`, `Rp200.000`, `Rp 30200.00` and `Rp0`, when parsed, then each yields the exact integer rupiah (no floating point); decimals of `.00` are dropped, and `.` or `,` as thousands separators are told apart from decimals.
+- [x] **AC6**: Given text that matches no known template, when the intent runs, then no transaction is created and Shortcuts shows "Couldn't read this email" with the sender.
+- [x] **AC7**: Given a reference already stored on a transaction, when the same email is imported again, then no new transaction is created and the intent says it was already added.
+- [x] **AC8**: Given the title, when the transaction is created, then the category comes from the same resolver chain as 0003 (Core ML, Foundation Models, keywords, Other); transfers get no category.
+- [x] **AC9**: Given a parsed bank, when the wallet is chosen, then it is the wallet whose name matches that bank (case-insensitive) or, if none, the default wallet; a transfer's destination is matched the same way and the intent reports if it fell back.
+- [x] **AC12**: Given an OVO merchant receipt (`Pembayaran Berhasil - Rp19.000`, `Nama Toko`, `Metode Pembayaran OVO Cash`, `No. Referensi`), when parsed, then the result is an expense of 19000 titled with `Nama Toko`, paid from the OVO wallet.
+- [x] **AC13**: Given a Grab receipt (`TOTAL Rp 43060`, `Pesanan Dari: Sushi Stop`, `Jenis Kendaraan: GrabFood`, `Pesanan ID`, `OVO Cash : Rp 43060`), when parsed, then the result is an expense of 43060 (the final total after discounts, not the subtotal) titled `GrabFood · Sushi Stop`, paid from the wallet named in the payment line. For a Grab ride, the title is `GrabCar` or `GrabBike` and the pickup place is not used.
+- [x] **AC14**: Given a GoPay GoTagihan PLN email (`Total Bayar Rp200.000`, final `Total Rp203.000`, `ID Pembayaran`), when parsed, then the result is an expense of 203000 (the final `Total`, which includes the admin fee) titled `PLN Token`, paid from the GoPay wallet because `Metode pembayaran` is blank.
+- [x] **AC15**: Given a Gojek trip email (`Total paid Rp17.500`, `Paid with GoPay`, `Thanks for ordering GoRide`), when parsed, then the result is an expense of 17500 titled `GoRide`, paid from the GoPay wallet. It has no reference number, so the dedupe key is built from the amount, service and received date.
+- [x] **AC16**: Given amounts with comma decimals (`Rp0,00`, `Rp5.826,00`) or none (`Rp 43060`), when parsed, then they are exact integer rupiah, and a trailing `,00` or `.00` is never read as thousands.
 - [ ] **AC10** (manual): Given the automation "When I get an email from <bank sender>" set to Run Immediately with the Swiftlet action, when a real receipt arrives, then the transaction appears without opening the app.
-- [ ] **AC11**: Given the email's received date is passed, when saved, then the transaction uses it; otherwise now. Dates in the email body are not parsed (the samples are locale-dependent and often blank).
+- [x] **AC11**: Given the email's received date is passed, when saved, then the transaction uses it; otherwise now. Dates in the email body are not parsed (the samples are locale-dependent and often blank).
 
 ## UX
 
@@ -90,4 +90,8 @@ Resolved on approval (2026-11-15) with the recommendations:
 
 ## Implementation notes
 
-Planned: `Services/Transaction/BankEmailParser.swift` (one template per provider, shared amount parser; merchant-style emails pick the wallet from the payment-method line, bank emails from the bank), `Services/Transaction/BankEmailImporter.swift` (wallet, category, dedupe, save), `AppIntents/Intents/ImportBankEmailIntent.swift` plus an entry in `SwiftletShortcuts`, setup guide view under `Views/Account`, tests in `SwiftletTests/BankEmailParserTests.swift`.
+`Services/Transaction/BankEmailParser.swift` has one template per provider and a shared exact-rupiah amount reader. `BankEmailImporter.swift` holds `BankEmailDedupe` (reference key, 10-minute near-duplicate window, wallet name matching) and the save path. `Services/Category/TitleCategoryResolver.swift` was extracted from `AddTransactionIntent` so both intents share one category chain. `AppIntents/Intents/ImportBankEmailIntent.swift` takes `Email Text`, `Sender` and `Received Date`; an unreadable email throws so the automation visibly fails. `Views/Account/EmailImportGuideView.swift` is the setup guide, linked from Account > Manage. `Transaction.externalReference` is the new schema field.
+
+Tests: `BankEmailParserTests` (AC1-5, 12-16) and `BankEmailImporterTests` (AC7-9, 11, near-duplicates, unreadable text).
+
+Still to do: AC10, a real receipt through the Shortcuts "When I get an email" automation on a device, which also settles open question 7. The intent's thrown error for AC6 has been run only through the importer tests, not in Shortcuts. New strings are not yet in `Localizable.xcstrings`; Xcode extracts them on its next build. Dana has no template yet.
