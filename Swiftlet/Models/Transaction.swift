@@ -15,6 +15,7 @@ final class Transaction {
     var date: Date = Date.now
     var transactionDescription: String = ""
     var createdAt: Date = Date.now
+    var externalReference: String = ""
 
     @Attribute(.externalStorage)
     var receiptImageData: Data?
