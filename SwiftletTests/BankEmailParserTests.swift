@@ -224,6 +224,44 @@ struct BankEmailParserTests {
         #expect(parsed.reference.isEmpty)
     }
 
+    @Test func parsesBCAWhenEachTableCellIsItsOwnLine() throws {
+        let cells = """
+        You just made a transaction through myBCA.
+        Status
+        :
+        Successful
+        Payment to
+        :
+        WARUNG MAKAN
+        Total Payment
+        :
+        IDR 56,661.00
+        Reference No.
+        :
+        REF001
+        """
+        let parsed = try #require(BankEmailParser.parse(cells))
+        #expect(parsed.amount == 56661)
+        #expect(parsed.title == "WARUNG MAKAN")
+        #expect(parsed.reference == "REF001")
+    }
+
+    @Test func parsesBCAFromHTMLTable() throws {
+        let html = """
+        <html><body><p>You just made a transaction through myBCA.</p>
+        <table>
+        <tr><td>Status</td><td>:</td><td>Successful</td></tr>
+        <tr><td>Payment to</td><td>:</td><td>WARUNG&nbsp;MAKAN</td></tr>
+        <tr><td>Total Payment</td><td>:</td><td>IDR 56,661.00</td></tr>
+        <tr><td>Reference No.</td><td>:</td><td>REF001</td></tr>
+        </table></body></html>
+        """
+        let parsed = try #require(BankEmailParser.parse(html))
+        #expect(parsed.amount == 56661)
+        #expect(parsed.title == "WARUNG MAKAN")
+        #expect(parsed.reference == "REF001")
+    }
+
     @Test func readsRupiahAmountsExactly() {
         #expect(BankEmailParser.rupiah("56,661.00") == 56661)
         #expect(BankEmailParser.rupiah("200.000") == 200_000)

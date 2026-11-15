@@ -17,9 +17,7 @@ nonisolated struct ParsedBankEmail: Equatable {
 
 nonisolated enum BankEmailParser {
     static func parse(_ text: String) -> ParsedBankEmail? {
-        let cleaned = text
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\u{00A0}", with: " ")
+        let cleaned = plainText(from: text)
         let doc = EmailText(cleaned)
         let lower = cleaned.lowercased()
 
@@ -33,6 +31,22 @@ nonisolated enum BankEmailParser {
         if lower.contains("payment success"), lower.contains("detail merchant") { return merchantNotice(doc) }
         if lower.contains("thanks for ordering go") { return gojek(doc) }
         return nil
+    }
+
+    static func plainText(from raw: String) -> String {
+        var text = raw
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\u{00A0}", with: " ")
+        guard text.range(of: #"<(?:html|body|table|tr|td|br|p|div)\b"#, options: [.regularExpression, .caseInsensitive]) != nil
+        else { return text }
+
+        text = text.replacingOccurrences(of: #"(?is)<(?:script|style)\b.*?</(?:script|style)>"#, with: "", options: .regularExpression)
+        text = text.replacingOccurrences(of: #"(?i)<br\s*/?>|</(?:td|th|tr|p|div|li|h\d)>"#, with: "\n", options: .regularExpression)
+        text = text.replacingOccurrences(of: #"<[^>]+>"#, with: "", options: .regularExpression)
+        for (entity, value) in [("&nbsp;", " "), ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""), ("&#39;", "'")] {
+            text = text.replacingOccurrences(of: entity, with: value)
+        }
+        return text
     }
 
     static func rupiah(_ raw: String) -> Int? {
@@ -158,7 +172,8 @@ nonisolated enum BankEmailParser {
             provider: "GoTagihan",
             title: firstMatch(#"Struk Pembayaran\s+(.+)"#, in: doc.text) ?? "GoTagihan",
             amountText: doc.field(["Total"]),
-            wallet: doc.field(["Metode pembayaran"]) ?? "GoPay",
+            // The value is blank in real GoTagihan emails, so the next line would be another label.
+            wallet: doc.field(["Metode pembayaran"], valueMayBeOnNextLine: false) ?? "GoPay",
             reference: firstMatch(#"ID Pembayaran\s*[-:]\s*(\S+)"#, in: doc.text) ?? doc.field(["No Ref"])
         )
     }
@@ -193,15 +208,26 @@ private nonisolated struct EmailText {
         lines = text.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
     }
 
-    func field(_ keys: [String]) -> String? {
+    func field(_ keys: [String], valueMayBeOnNextLine: Bool = true) -> String? {
         for key in keys {
             let pattern = "^" + NSRegularExpression.escapedPattern(for: key)
                 + #"(?:[ \t]*:[ \t]*|[ \t]*\t[ \t]*|[ ]{2,})(\S.*)$"#
             for line in lines {
                 if let value = BankEmailParser.firstMatch(pattern, in: line) { return value }
             }
+            if valueMayBeOnNextLine, let value = valueOnFollowingLine(of: key) { return value }
         }
         return nil
+    }
+
+    private func valueOnFollowingLine(of key: String) -> String? {
+        let separators = CharacterSet(charactersIn: ": ")
+        let target = key.trimmingCharacters(in: separators).lowercased()
+        guard let index = lines.firstIndex(where: {
+            $0.trimmingCharacters(in: separators).lowercased() == target
+        }) else { return nil }
+        return lines[(index + 1)...].first { !$0.trimmingCharacters(in: separators).isEmpty }
+            .map { $0.trimmingCharacters(in: separators) }
     }
 
     func lineAfter(_ header: String) -> String? {
