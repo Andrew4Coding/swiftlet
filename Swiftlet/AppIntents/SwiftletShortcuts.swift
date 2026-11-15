@@ -35,5 +35,15 @@ struct SwiftletShortcuts: AppShortcutsProvider {
             shortTitle: "Today's Transactions",
             systemImageName: "calendar"
         )
+
+        AppShortcut(
+            intent: ImportBankEmailIntent(),
+            phrases: [
+                "Import a bank email in \(.applicationName)",
+                "Add a receipt email to \(.applicationName)",
+            ],
+            shortTitle: "Import Email",
+            systemImageName: "envelope.badge"
+        )
     }
 }
