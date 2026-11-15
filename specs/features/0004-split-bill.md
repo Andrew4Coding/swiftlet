@@ -85,7 +85,7 @@ The paying transaction amount is the user's share. Money is whole rupiah, comput
 
 ## Open questions
 
-- Should settled money be recorded as a transfer into a chosen wallet later?
+- Should settled money be recorded as a transfer into a chosen wallet later? (Settling now adds an income in the Reimburse category to the paying wallet, see Implementation notes.)
 
 ## Implementation notes
 
@@ -93,6 +93,7 @@ Main types:
 
 - `Services/Split/SplitCalculator` (integer equal, proportional and itemized splitting), `ReceiptParser` and `ReceiptMath` (text to items, plus the add-up check), `ReceiptScanner` (Vision `RecognizeDocumentsRequest`, rows rebuilt from text positions), `ReceiptModelParser` (Foundation Models fallback, used only when the deterministic result does not add up).
 - Models `SplitBill`, `SplitItem`, `SplitShare`, `SplitPerson`. `Transaction.splitBill` links the paying transaction, whose amount is the user's share. `Wallet.balance` subtracts what others still owe.
+- `Services/Split/SplitReimbursement`: marking a share paid also inserts an income `Transaction` (category Reimburse, paying wallet, `externalReference` `split-reimbursement:<share key>`); undoing deletes it. `Wallet.balance` counts a share with such an income at its full amount, so the income is not double counted. Shares settled before this have no income and keep the old maths.
 - `Services/Split/CropGeometry` (pure crop maths) and `Views/Split/ReceiptCropView` (the crop screen shown after a photo is chosen or taken).
 - `ViewModels/SplitBillViewModel` and `Views/Split/` (editor steps, Splits list, detail with settlement). Entry is the Splits tab in `RootTabView`.
 
