@@ -57,7 +57,8 @@ struct BankEmailImporterTests {
         context.insert(bca)
         context.insert(Wallet(name: "Cash", sortIndex: 1))
 
-        let result = await BankEmailImporter.importEmail(text: bcaEmail, receivedAt: nil, context: context)
+        let received = Date(timeIntervalSince1970: 1_800_000_000)
+        let result = await BankEmailImporter.importEmail(text: bcaEmail, receivedAt: received, context: context)
 
         guard case let .added(title, amount, wallet, usedDefault) = result else {
             Issue.record("expected added, got \(result)")
@@ -70,6 +71,7 @@ struct BankEmailImporterTests {
         let saved = try #require(try transactions(context).first)
         #expect(saved.wallet?.name == "BCA")
         #expect(saved.externalReference == "bca:ref001")
+        #expect(saved.date == received)
     }
 
     @Test func importingTheSameEmailTwiceAddsOneTransaction() async throws {
