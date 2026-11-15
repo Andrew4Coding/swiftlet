@@ -49,21 +49,32 @@ struct ImportBankEmailIntent: AppIntent {
         case .duplicate:
             return .result(dialog: "That email was already added.")
         case .unreadable:
-            throw BankEmailImportError.unreadable(sender: sender)
+            throw BankEmailImportError.unreadable(sender: sender, preview: Self.preview(of: emailText))
         }
     }
 }
 
+extension ImportBankEmailIntent {
+    static func preview(of text: String) -> String {
+        let flat = BankEmailParser.plainText(from: text)
+            .split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " | ")
+        return flat.isEmpty ? "(empty)" : String(flat.prefix(160))
+    }
+}
+
 enum BankEmailImportError: Error, CustomLocalizedStringResourceConvertible {
-    case unreadable(sender: String?)
+    case unreadable(sender: String?, preview: String)
 
     var localizedStringResource: LocalizedStringResource {
         switch self {
-        case let .unreadable(sender):
+        case let .unreadable(sender, preview):
             if let sender, !sender.isEmpty {
-                return "Couldn't read this email from \(sender)."
+                return "Couldn't read this email from \(sender). Text received: \(preview)"
             }
-            return "Couldn't read this email."
+            return "Couldn't read this email. Text received: \(preview)"
         }
     }
 }
