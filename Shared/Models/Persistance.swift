@@ -19,6 +19,7 @@ enum Persistance {
             SplitItem.self,
             SplitShare.self,
             SplitPerson.self,
+            SavedFilter.self,
         ])
 
         let config = ModelConfiguration(
