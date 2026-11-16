@@ -278,14 +278,30 @@ platform :ios do
   # project.yml has a single number, so take the highest of the two.
   def next_build_number(api_key)
     latest = %w[ios osx].map do |store_platform|
-      latest_testflight_build_number(
-        api_key: api_key,
-        app_identifier: APP_IDENTIFIER,
-        platform: store_platform,
-        initial_build_number: 0
-      ).to_i
+      with_retries("latest #{store_platform} build number") do
+        latest_testflight_build_number(
+          api_key: api_key,
+          app_identifier: APP_IDENTIFIER,
+          platform: store_platform,
+          initial_build_number: 0
+        ).to_i
+      end
     end.max
     latest + 1
+  end
+
+  # App Store Connect sometimes drops the connection mid-request ("SSL_read: unexpected eof").
+  def with_retries(label, attempts: 3)
+    tries = 0
+    begin
+      tries += 1
+      yield
+    rescue StandardError => e
+      raise if tries >= attempts || e.is_a?(FastlaneCore::Interface::FastlaneError)
+      UI.important("#{label} failed (#{e.message}), retrying #{tries}/#{attempts - 1}...")
+      sleep(3 * tries)
+      retry
+    end
   end
 
   def testflight_changelog
