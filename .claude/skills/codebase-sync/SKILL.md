@@ -1,11 +1,11 @@
 ---
 name: codebase-sync
-description: Keep the agent's knowledge of this codebase current. Run after any change to Swiftlet*/, Shared/, project.yml or fastlane/Fastfile, and whenever the Stop hook reports "Source changed since the last codebase sync". Updates CLAUDE.md, feature spec status and skills, then records a new sync baseline.
+description: Keep the agent's knowledge of this codebase current. Run after any change to Swiftlet*/, Shared/, project.yml or fastlane/Fastfile. Updates CLAUDE.md, feature spec status and skills, then records a new sync baseline.
 ---
 
 # Codebase sync
 
-The Stop hook (`.claude/hooks/stop-sync-check.sh`) compares a fingerprint of the watched files (`Swiftlet/`, `Shared/`, `SwiftletMac/`, `SwiftletWidgets/`, `SwiftletShareExtension/`, `project.yml`, `fastlane/Fastfile`) with the one recorded in `.claude/sync-state`.
+`.claude/hooks/sync-state.sh in-sync` compares a fingerprint of the watched files (`Swiftlet/`, `Shared/`, `SwiftletMac/`, `SwiftletWidgets/`, `SwiftletShareExtension/`, `project.yml`, `fastlane/Fastfile`) with the one recorded in `.claude/sync-state`.
 The fingerprint is a git tree hash of the files' *contents*, including uncommitted and untracked files. Squash merges and rebases rewrite commit SHAs but not contents, so the baseline stays valid after a PR is squashed. `.claude/hooks/sync-state.sh` computes and records it.
 
 This skill reviews what changed since the last baseline and makes the repo's own docs and skills match the code.
