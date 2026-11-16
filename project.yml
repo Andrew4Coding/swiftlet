@@ -83,6 +83,7 @@ targets:
     platform: iOS
     sources:
       - path: "Swiftlet"
+      - path: "Shared"
     info:
       path: "Swiftlet/Info.plist"
       properties:
@@ -185,8 +186,8 @@ targets:
     platform: iOS
     sources:
       - path: "SwiftletWidgets"
-      - path: "Swiftlet/Shared/TodaySpendingSnapshot.swift"
-      - path: "Swiftlet/Services/CurrencyFormatter.swift"
+      - path: "Shared/Widget/TodaySpendingSnapshot.swift"
+      - path: "Shared/Services/CurrencyFormatter.swift"
     entitlements:
       path: "SwiftletWidgets/SwiftletWidgets.entitlements"
       properties:
@@ -217,13 +218,13 @@ targets:
     platform: macOS
     sources:
       - path: "SwiftletMenuBar"
-      - path: "Swiftlet/Models"
+      - path: "Shared/Models"
         excludes:
           - "Persistance.swift"
-      - path: "Swiftlet/Services/CurrencyFormatter.swift"
-      - path: "Swiftlet/Services/Wallet/WalletMigrator.swift"
+      - path: "Shared/Services/CurrencyFormatter.swift"
+      - path: "Shared/Services/Wallet/WalletMigrator.swift"
       - path: "Swiftlet/Views/Components/AppTheme.swift"
-      - path: "Swiftlet/DesignSystem/Tokens/Colors"
+      - path: "Shared/DesignSystem/Tokens/Colors"
     entitlements:
       path: "SwiftletMenuBar/SwiftletMenuBar.entitlements"
       properties:
