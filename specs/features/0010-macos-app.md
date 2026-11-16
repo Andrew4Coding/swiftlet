@@ -111,7 +111,7 @@ Accessibility notes:
 
 - [x] Fits `specs/constraints.md` (privacy, CloudKit, accessibility, performance). macOS 26 is noted as the Mac minimum, via ADR 0002.
 - [x] No new dependency (hotkey uses Carbon; ADR 0002 documents it).
-- [ ] `Swiftlet/PrivacyInfo.xcprivacy` equivalent exists for the Mac target and stays accurate.
+- [x] `Swiftlet/PrivacyInfo.xcprivacy` equivalent exists for the Mac target and stays accurate (`SwiftletMac/PrivacyInfo.xcprivacy`).
 
 ## Milestones
 
@@ -155,4 +155,5 @@ First pass (milestones 1 and 2, most of 3 and part of 4):
 - Mac UI: sidebar with smart views, sortable `Table` (column visibility in `@AppStorage`), inspector edit and bulk edit (`BulkTransactionActions`, one undo step), Swift Charts dashboard, CSV and PDF export of the visible rows, import and drop of CSV/JSON, receipt drop, paste and Import from iPhone into Add Transaction, wallets, splits (mark paid, undo, remind), recurring, categories, Settings (shortcut, reminders, data), quick-add window and menu bar, Carbon global shortcut (default ⌃⌥N).
 - Checked by running the app with the debug `-sampleData` flag: dashboard, transactions table and inspector, splits.
 - Built but not yet checked by hand on a Mac: AC4 (sort clicks, remembered columns), AC7 (smart view after relaunch and on another device), AC8 (opening the exported CSV and PDF), AC12 (CSV drop and File > Import; the parser is tested), AC5 (bulk edit and ⌘Z), AC9 (global shortcut from another app), AC10 (menu bar add), AC11 (receipt drop or paste filling amount and merchant), AC13 (mark paid and wallet balance).
-- Not done yet: AC1 needs a manual check with real iCloud data (debug builds use the CloudKit development environment, so production iPhone data does not show). AC3 (Ask Swiftlet on Mac), AC14 (IAP), AC15 (Mac widgets, share extension, App Intents), AC16 (reminders are scheduled on Mac, delivery unchecked), split editing on Mac, PrivacyInfo for the Mac target, the Fastlane Mac lane.
+- Not done yet: AC1 needs a manual check with real iCloud data (debug builds use the CloudKit development environment, so production iPhone data does not show). AC3 (Ask Swiftlet on Mac), AC14 (IAP), AC15 (Mac widgets, share extension, App Intents), AC16 (reminders are scheduled on Mac, delivery unchecked), split editing on Mac.
+- Release: `SwiftletMac/PrivacyInfo.xcprivacy` and fastlane `mac beta`, `mac release`, `mac screenshots`, `mac build`, `mac bump`, `mac register`. A Release archive builds; no upload has been made yet.
