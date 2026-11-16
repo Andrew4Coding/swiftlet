@@ -47,6 +47,8 @@ xcodebuild -project Swiftlet.xcodeproj -scheme SwiftletMac -destination 'platfor
 xcodebuild -project Swiftlet.xcodeproj -scheme Swiftlet -destination 'platform=iOS Simulator,id=<iOS 26.5 simulator id>' test -only-testing:SwiftletTests
 ```
 
+Releases go through fastlane (`fastlane/Fastfile`, API key in `fastlane/.env`): `bundle exec fastlane ios beta|release` and `bundle exec fastlane mac beta|release` (Mac screenshots in `fastlane/mac_screenshots/<locale>/`). Both platforms share one App Store record and one `CURRENT_PROJECT_VERSION`, so `bump` uses the highest TestFlight build across iOS and macOS. A new SwiftData model needs a CloudKit schema deploy to production before a TestFlight build.
+
 `SwiftletTests` (Swift Testing) is the only test target. Use a simulator id: the deployment target is iOS 26.5, so a device by name can match an older runtime and fail. Swift 5 language mode is on, so write regex literals as `#/.../#`.
 
 ## Spec-driven development
