@@ -4,7 +4,9 @@
 //
 
 import CoreGraphics
+#if canImport(UIKit)
 import UIKit
+#endif
 
 nonisolated enum CropHandle: CaseIterable, Hashable {
     case topLeading, top, topTrailing
@@ -85,6 +87,7 @@ nonisolated enum CropGeometry {
         return resize(rect, handle: handle, by: translation)
     }
 
+    #if canImport(UIKit)
     static func crop(_ image: UIImage, to normalized: CGRect) -> UIImage? {
         guard let cgImage = image.cgImage else { return nil }
         let width = CGFloat(cgImage.width)
@@ -98,6 +101,7 @@ nonisolated enum CropGeometry {
         guard !pixels.isEmpty, let cropped = cgImage.cropping(to: pixels) else { return nil }
         return UIImage(cgImage: cropped, scale: 1, orientation: .up)
     }
+    #endif
 
     private static func clamp(_ value: CGFloat, _ lower: CGFloat, _ upper: CGFloat) -> CGFloat {
         min(max(value, lower), max(lower, upper))

@@ -223,7 +223,7 @@ targets:
           - "Persistance.swift"
       - path: "Shared/Services/CurrencyFormatter.swift"
       - path: "Shared/Services/Wallet/WalletMigrator.swift"
-      - path: "Swiftlet/Views/Components/AppTheme.swift"
+      - path: "Shared/DesignSystem/AppTheme.swift"
       - path: "Shared/DesignSystem/Tokens/Colors"
     entitlements:
       path: "SwiftletMenuBar/SwiftletMenuBar.entitlements"

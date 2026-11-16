@@ -3,7 +3,13 @@
 //  Swiftlet
 //
 
+import CoreGraphics
+import Foundation
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 
 /// Renders a filtered list of transactions into a printable A4 PDF report: a title, the export
 /// timestamp, the covered time range, and a paginated table of every transaction (the bill
@@ -35,7 +41,6 @@ enum TransactionPDFRenderer {
         exportedAt: Date = .now
     ) -> Data {
         let contentWidth = pageSize.width - margin * 2
-        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: pageSize))
 
         let rowDateFormatter = DateFormatter()
         rowDateFormatter.dateFormat = "d MMM yyyy"
@@ -44,11 +49,11 @@ enum TransactionPDFRenderer {
         exportedFormatter.dateStyle = .long
         exportedFormatter.timeStyle = .short
 
-        return renderer.pdfData { ctx in
+        return pdfData { beginPDFPage in
             var y: CGFloat = 0
 
             func beginPage() {
-                ctx.beginPage()
+                beginPDFPage()
                 y = margin
                 draw(title, in: CGRect(x: margin, y: y, width: contentWidth, height: 24),
                      font: .boldSystemFont(ofSize: 18))
@@ -110,7 +115,40 @@ enum TransactionPDFRenderer {
         }
     }
 
-    private static func draw(_ text: String, in rect: CGRect, font: UIFont, color: UIColor = .black) {
+    private static func pdfData(_ draw: (_ beginPage: () -> Void) -> Void) -> Data {
+        #if canImport(UIKit)
+        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: pageSize))
+        return renderer.pdfData { ctx in
+            draw { ctx.beginPage() }
+        }
+        #else
+        let output = NSMutableData()
+        var mediaBox = CGRect(origin: .zero, size: pageSize)
+        guard let consumer = CGDataConsumer(data: output),
+              let context = CGContext(consumer: consumer, mediaBox: &mediaBox, nil)
+        else { return Data() }
+        var pageOpen = false
+        let previous = NSGraphicsContext.current
+        draw {
+            if pageOpen {
+                context.endPDFPage()
+            }
+            context.beginPDFPage(nil)
+            context.translateBy(x: 0, y: pageSize.height)
+            context.scaleBy(x: 1, y: -1)
+            NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: true)
+            pageOpen = true
+        }
+        if pageOpen {
+            context.endPDFPage()
+        }
+        context.closePDF()
+        NSGraphicsContext.current = previous
+        return output as Data
+        #endif
+    }
+
+    private static func draw(_ text: String, in rect: CGRect, font: PlatformFont, color: PlatformColor = .black) {
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineBreakMode = .byTruncatingTail
         (text as NSString).draw(in: rect, withAttributes: [
@@ -120,7 +158,7 @@ enum TransactionPDFRenderer {
         ])
     }
 
-    private static func drawRow(_ cells: [String], font: UIFont, contentWidth: CGFloat, y: inout CGFloat) {
+    private static func drawRow(_ cells: [String], font: PlatformFont, contentWidth: CGFloat, y: inout CGFloat) {
         var x = margin
         for (index, cell) in cells.enumerated() where index < columns.count {
             let width = contentWidth * columns[index].fraction
@@ -131,7 +169,7 @@ enum TransactionPDFRenderer {
                 in: CGRect(x: x + 2, y: y, width: width - 4, height: rowHeight),
                 withAttributes: [
                     .font: font,
-                    .foregroundColor: UIColor.black,
+                    .foregroundColor: PlatformColor.black,
                     .paragraphStyle: paragraph,
                 ]
             )
@@ -141,11 +179,17 @@ enum TransactionPDFRenderer {
     }
 
     private static func drawSeparator(width: CGFloat, y: inout CGFloat) {
+        #if canImport(UIKit)
         let path = UIBezierPath()
         path.move(to: CGPoint(x: margin, y: y))
         path.addLine(to: CGPoint(x: margin + width, y: y))
+        #else
+        let path = NSBezierPath()
+        path.move(to: CGPoint(x: margin, y: y))
+        path.line(to: CGPoint(x: margin + width, y: y))
+        #endif
         path.lineWidth = 0.5
-        UIColor.lightGray.setStroke()
+        PlatformColor.lightGray.setStroke()
         path.stroke()
         y += 6
     }

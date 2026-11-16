@@ -6,7 +6,9 @@
 import Foundation
 import Observation
 import SwiftData
+#if canImport(UIKit)
 import UIKit
+#endif
 
 @Observable
 final class SplitBillViewModel {
@@ -52,7 +54,9 @@ final class SplitBillViewModel {
     var title = ""
     var date = Date.now
     var receiptImageData: Data?
+    #if canImport(UIKit)
     var pendingImage: UIImage?
+    #endif
     var items: [DraftItem] = []
     var serviceText = ""
     var taxText = ""

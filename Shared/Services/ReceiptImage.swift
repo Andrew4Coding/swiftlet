@@ -6,9 +6,15 @@
 //
 
 import ImageIO
+import UniformTypeIdentifiers
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 
 enum ReceiptImage {
+    #if canImport(UIKit)
     static func compressedData(from image: UIImage, maxDimension: CGFloat = 2000) -> Data? {
         let longestSide = max(image.size.width, image.size.height)
         let scale = longestSide > maxDimension ? maxDimension / longestSide : 1
@@ -37,13 +43,69 @@ enum ReceiptImage {
         }
     }
 
-    static func thumbnail(from data: Data, maxPixels: Int = 160) -> UIImage? {
+    #else
+    static func compressedData(from image: NSImage, maxDimension: CGFloat = 2000) -> Data? {
+        guard let cgImage = image.cgImage else { return nil }
+        return jpegData(from: cgImage, maxDimension: maxDimension)
+    }
+
+    static func compressedData(from data: Data, maxDimension: CGFloat = 2000) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: Int(maxDimension),
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return jpegData(from: cgImage, maxDimension: maxDimension)
+    }
+
+    static func upright(from data: Data, maxPixels: CGFloat = 4000) -> NSImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: Int(maxPixels),
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return NSImage(cgImage: cgImage, size: CGSize(width: cgImage.width, height: cgImage.height))
+    }
+
+    private static func jpegData(from cgImage: CGImage, maxDimension: CGFloat) -> Data? {
+        let longest = CGFloat(max(cgImage.width, cgImage.height))
+        let scale = longest > maxDimension ? maxDimension / longest : 1
+        let width = Int((CGFloat(cgImage.width) * scale).rounded())
+        let height = Int((CGFloat(cgImage.height) * scale).rounded())
+        guard let context = CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ) else { return nil }
+        context.interpolationQuality = .high
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let scaled = context.makeImage() else { return nil }
+        let output = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(output, UTType.jpeg.identifier as CFString, 1, nil) else {
+            return nil
+        }
+        CGImageDestinationAddImage(destination, scaled, [kCGImageDestinationLossyCompressionQuality: 0.8] as CFDictionary)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return output as Data
+    }
+    #endif
+
+    static func thumbnail(from data: Data, maxPixels: Int = 160) -> PlatformImage? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceThumbnailMaxPixelSize: maxPixels,
         ]
-        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary).map(UIImage.init(cgImage:))
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary).map { cgImage in
+            #if canImport(UIKit)
+            UIImage(cgImage: cgImage)
+            #else
+            NSImage(cgImage: cgImage, size: CGSize(width: cgImage.width, height: cgImage.height))
+            #endif
+        }
     }
 }
