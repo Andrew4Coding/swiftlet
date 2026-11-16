@@ -16,7 +16,7 @@ Swiftlet is a personal-finance tracker in Indonesian Rupiah: log expenses, incom
 | `Swiftlet` | Main iOS app: home, add, transactions, wallets, budgets, recurring, stats, account |
 | `SwiftletShareExtension` | Add a transaction from a shared receipt image |
 | `SwiftletWidgets` | WidgetKit glance at spending and budgets |
-| `SwiftletMenuBar` | macOS menu bar companion |
+| `SwiftletMac` | Native Mac app for review and analysis, with a menu bar quick add (spec 0010) |
 
 ## Problem
 

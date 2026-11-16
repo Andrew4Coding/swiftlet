@@ -1,7 +1,7 @@
 ---
 id: 0002
 title: Native macOS app as a separate target over Shared/
-status: proposed
+status: accepted
 date: 2026-11-16
 ---
 

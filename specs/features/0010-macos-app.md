@@ -63,11 +63,11 @@ A native macOS version of Swiftlet, built for reviewing and analysing money: a s
 Each one is testable and maps to at least one test, or a documented manual check on a Mac.
 
 - [ ] **AC1**: Given an iOS device and a Mac on the same iCloud account, when a transaction is added on either, then it appears on the other without manual action.
-- [ ] **AC2**: Given the Mac app launches on a Mac without Apple Intelligence, when Foundation Models is unavailable, then no Ask Swiftlet sidebar item or entry point is shown and no model call is attempted.
+- [x] **AC2**: Given the Mac app launches on a Mac without Apple Intelligence, when Foundation Models is unavailable, then no Ask Swiftlet sidebar item or entry point is shown and no model call is attempted.
 - [ ] **AC3**: Given the Mac app launches on macOS 26 with Apple Intelligence, when the user opens Ask Swiftlet, then it behaves as in spec 0008.
 - [ ] **AC4**: Given the transaction table, when the user clicks a column header, then rows sort by that column, and a second click reverses the order. Column visibility is remembered.
 - [ ] **AC5**: Given several selected transactions, when the user applies a bulk category change, wallet move or delete, then all selected rows update (or are removed) in one undoable step, and wallet balances stay correct.
-- [ ] **AC6**: Given a date range and filters, when the dashboard loads, then charts show spending by category, day and wallet and income versus expense, and totals equal `ChatQueries`-style integer-rupiah sums.
+- [x] **AC6**: Given a date range and filters, when the dashboard loads, then charts show spending by category, day and wallet and income versus expense, and totals equal `ChatQueries`-style integer-rupiah sums.
 - [ ] **AC7**: Given a filter the user saves, when they select it in the sidebar, then the table shows the same result as the live filter, and it survives relaunch and syncs through CloudKit.
 - [ ] **AC8**: Given a filtered view, when the user exports, then CSV and PDF contain exactly the visible rows.
 - [ ] **AC9**: Given the app is running, when the user presses the global shortcut, then the quick-add window opens focused on the amount field from any app, and saving writes a transaction. The shortcut is changeable in Settings and does not require an accessibility permission.
@@ -78,8 +78,8 @@ Each one is testable and maps to at least one test, or a documented manual check
 - [ ] **AC14**: Given the paid iOS entitlement, when the user opens the Mac app on the same Apple ID, then the same StoreKit entitlement unlocks the Mac app.
 - [ ] **AC15**: Given the desktop widget, the Mac share extension and the App Intents, when each is used, then each reads or writes the shared store and respects the sandbox.
 - [ ] **AC16**: Given a repeated recurring or split reminder, when it is due, then a single notification is delivered through UserNotifications.
-- [ ] **AC17**: Given the iOS app after the `Shared/` move, when the `Swiftlet` scheme is built and `SwiftletTests` run, then both pass with no new warnings.
-- [ ] **AC18**: Given the `SwiftletMenuBar` target is removed, when `xcodegen generate` runs, then no project reference to it remains and its quick-add behaviour is covered by AC9 and AC10.
+- [x] **AC17**: Given the iOS app after the `Shared/` move, when the `Swiftlet` scheme is built and `SwiftletTests` run, then both pass with no new warnings.
+- [x] **AC18**: Given the `SwiftletMenuBar` target is removed, when `xcodegen generate` runs, then no project reference to it remains and its quick-add behaviour is covered by AC9 and AC10.
 
 ## UX
 
@@ -109,7 +109,7 @@ Accessibility notes:
 
 ## Constraints check
 
-- [ ] Fits `specs/constraints.md` (privacy, CloudKit, accessibility, performance). Needs a note adding macOS 26 as the Mac minimum for v1, via ADR 0002.
+- [x] Fits `specs/constraints.md` (privacy, CloudKit, accessibility, performance). macOS 26 is noted as the Mac minimum, via ADR 0002.
 - [x] No new dependency (hotkey uses Carbon; ADR 0002 documents it).
 - [ ] `Swiftlet/PrivacyInfo.xcprivacy` equivalent exists for the Mac target and stays accurate.
 
@@ -148,4 +148,11 @@ Accessibility notes:
 
 ## Implementation notes
 
-Filled during and after build by the `codebase-sync` skill: main types, files, tests.
+First pass (milestones 1 and 2, most of 3 and part of 4):
+
+- `Shared/` holds models, services, view models and design tokens; `SwiftletMac` is the Mac target (same bundle id, iCloud container and app group, sandboxed, macOS 26). `SwiftletMenuBar` is gone; its quick add is the Mac app's `MenuBarExtra`.
+- Shared logic with tests (`TransactionFilterTests`): `TransactionFilter`, `DashboardSummary`, CSV import (`TransactionIOService.decodeCSV`). `SavedFilter` is new in the schema, so CloudKit needs a schema deploy before TestFlight.
+- Mac UI: sidebar with smart views, sortable `Table` (column visibility in `@AppStorage`), inspector edit and bulk edit (`BulkTransactionActions`, one undo step), Swift Charts dashboard, CSV and PDF export of the visible rows, import and drop of CSV/JSON, receipt drop, paste and Import from iPhone into Add Transaction, wallets, splits (mark paid, undo, remind), recurring, categories, Settings (shortcut, reminders, data), quick-add window and menu bar, Carbon global shortcut (default ⌃⌥N).
+- Checked by running the app with the debug `-sampleData` flag: dashboard, transactions table and inspector, splits.
+- Built but not yet checked by hand on a Mac: AC4 (sort clicks, remembered columns), AC7 (smart view after relaunch and on another device), AC8 (opening the exported CSV and PDF), AC12 (CSV drop and File > Import; the parser is tested), AC5 (bulk edit and ⌘Z), AC9 (global shortcut from another app), AC10 (menu bar add), AC11 (receipt drop or paste filling amount and merchant), AC13 (mark paid and wallet balance).
+- Not done yet: AC1 needs a manual check with real iCloud data (debug builds use the CloudKit development environment, so production iPhone data does not show). AC3 (Ask Swiftlet on Mac), AC14 (IAP), AC15 (Mac widgets, share extension, App Intents), AC16 (reminders are scheduled on Mac, delivery unchecked), split editing on Mac, PrivacyInfo for the Mac target, the Fastlane Mac lane.
