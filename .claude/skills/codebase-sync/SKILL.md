@@ -1,11 +1,11 @@
 ---
 name: codebase-sync
-description: Keep the agent's knowledge of this codebase current. Run after any change to Swiftlet*/, project.yml or fastlane/Fastfile, and whenever the Stop hook reports "Source changed since the last codebase sync". Updates CLAUDE.md, feature spec status and skills, then records a new sync baseline.
+description: Keep the agent's knowledge of this codebase current. Run after any change to Swiftlet*/, Shared/, project.yml or fastlane/Fastfile, and whenever the Stop hook reports "Source changed since the last codebase sync". Updates CLAUDE.md, feature spec status and skills, then records a new sync baseline.
 ---
 
 # Codebase sync
 
-The Stop hook (`.claude/hooks/stop-sync-check.sh`) compares a fingerprint of the watched files (`Swiftlet/`, `SwiftletWidgets/`, `SwiftletShareExtension/`, `SwiftletMenuBar/`, `project.yml`, `fastlane/Fastfile`) with the one recorded in `.claude/sync-state`.
+The Stop hook (`.claude/hooks/stop-sync-check.sh`) compares a fingerprint of the watched files (`Swiftlet/`, `Shared/`, `SwiftletMac/`, `SwiftletWidgets/`, `SwiftletShareExtension/`, `project.yml`, `fastlane/Fastfile`) with the one recorded in `.claude/sync-state`.
 The fingerprint is a git tree hash of the files' *contents*, including uncommitted and untracked files. Squash merges and rebases rewrite commit SHAs but not contents, so the baseline stays valid after a PR is squashed. `.claude/hooks/sync-state.sh` computes and records it.
 
 This skill reviews what changed since the last baseline and makes the repo's own docs and skills match the code.
@@ -20,7 +20,7 @@ Code changes must already be committed as microcommits (see the `commit` skill).
 base="$(git log -1 --format=%H -- .claude/sync-state)"   # last commit that recorded a baseline
 .claude/hooks/sync-state.sh changed                        # watched files changed since then, plus untracked ones
 git log --oneline "$base"..HEAD
-git diff "$base" -- Swiftlet SwiftletWidgets SwiftletShareExtension SwiftletMenuBar project.yml fastlane/Fastfile
+git diff "$base" -- Swiftlet Shared SwiftletMac SwiftletWidgets SwiftletShareExtension project.yml fastlane/Fastfile
 ```
 
 If no commit has touched `.claude/sync-state` yet, treat the whole tree as new: read `CLAUDE.md`, `project.yml`, and every folder under `Swiftlet/`.

@@ -20,10 +20,11 @@ description: Spec-first recipe for adding a feature or screen to Swiftlet. Use w
 
 | The code is… | Put it in |
 |---|---|
-| a SwiftData `@Model` | `Swiftlet/Models/` (CloudKit rules: defaults or optionals, optional relationships with inverses) |
-| stateless logic | `Swiftlet/Services/` |
-| a view model | `Swiftlet/ViewModels/` (`@Observable`) |
-| a view | `Swiftlet/Views/<Feature>/`, shared pieces in `Views/Components/` |
+| a SwiftData `@Model` | `Shared/Models/` (CloudKit rules: defaults or optionals, optional relationships with inverses) |
+| stateless logic | `Shared/Services/` |
+| a view model | `Shared/ViewModels/` (`@Observable`) |
+| a view | `Swiftlet/Views/<Feature>/` (iOS) or `SwiftletMac/<Feature>/` (Mac); iOS shared pieces in `Views/Components/` |
+| anything in `Shared/` | must build for both iOS and macOS (`PlatformImage`, `#if canImport(UIKit)`) |
 | code a widget or extension also needs | keep it free of app-only dependencies and list it in `project.yml` |
 
 ## 3. Build in microcommits (see the `commit` skill)
@@ -32,7 +33,7 @@ description: Spec-first recipe for adding a feature or screen to Swiftlet. Use w
 2. **Service and view model**: logic in `Services/`, state in an `@Observable` view model.
 3. **View**: use `DesignSystem` tokens and components (`ColorToken`, `.dsTextStyle`, `.dsSurface()`, `DSButton`); no gradients. Add strings to `Localizable.xcstrings`.
 4. **Navigation**: wire the view in.
-5. **Verify**: run `xcodegen generate` and build the `Swiftlet` scheme (see CLAUDE.md Commands). There are no test targets yet, so document a manual check for each acceptance criterion in the spec's Implementation notes.
+5. **Verify**: run `xcodegen generate` and build the `Swiftlet` and `SwiftletMac` schemes and run `SwiftletTests` (see CLAUDE.md Commands). Cover shared logic with tests; document a manual check for each UI criterion in the spec's Implementation notes.
 
 ## 4. Close the loop
 

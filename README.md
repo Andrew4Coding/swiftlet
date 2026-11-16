@@ -35,10 +35,9 @@ xcodebuild -project Swiftlet.xcodeproj -scheme Swiftlet -destination 'platform=i
 
 ## Project layout
 
-- `Swiftlet/Models` — SwiftData models (`Transaction`, `Bill`, categories, money sources) and the persistence container.
+- `Shared` — code both apps compile: SwiftData models and the persistence container, services, view models and design tokens.
 - `Swiftlet/Views` — SwiftUI screens, grouped by feature (Home, Transactions, Add, Bills, Account, Auth).
-- `Swiftlet/ViewModels` — view models backing those screens.
-- `Swiftlet/Services` — currency formatting, authentication, receipt scanning and parsing, category classification, transaction import/export.
+- `SwiftletMac` — the native Mac app: sidebar, transaction table, dashboard, menu bar quick add.
 - `Swiftlet/AppIntents` — Siri and App Intents support.
 - `SwiftletShareExtension` — share-sheet target for sending a receipt image into the app.
 - `fastlane` — TestFlight and App Store build and metadata lanes. See `fastlane/README.md`.
