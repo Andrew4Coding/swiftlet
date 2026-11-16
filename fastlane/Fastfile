@@ -14,15 +14,34 @@
 #   bundle exec fastlane ios metadata         # push text metadata only (no build)
 #   bundle exec fastlane ios build            # local signed .ipa, no upload
 #   bundle exec fastlane ios bump             # set build number to latest TestFlight + 1
+#
+#   bundle exec fastlane mac beta            # build the Mac app (.pkg) + upload to TestFlight
+#   bundle exec fastlane mac release          # build + upload the Mac binary and metadata; submit with submit:true
+#   bundle exec fastlane mac build            # local signed .pkg, no upload
+#
+# iOS and macOS share one App Store record (same bundle id, universal purchase) and one
+# CURRENT_PROJECT_VERSION in project.yml, so `bump` takes the highest build on either platform.
 
 default_platform(:ios)
 
 WORKSPACE_DIR   = File.expand_path("..", __dir__)
 XCODEPROJ       = "Swiftlet.xcodeproj"
 SCHEME          = "Swiftlet"
+MAC_SCHEME      = "SwiftletMac"
+MAC_SCREENSHOTS = File.join(__dir__, "mac_screenshots")
 APP_IDENTIFIER  = "com.andrew4coding.swiftlet.Swiftlet"
 EXT_IDENTIFIER  = "#{APP_IDENTIFIER}.SwiftletShareExtension"
 OUTPUT_DIR      = File.join(WORKSPACE_DIR, "build", "fastlane")
+
+desc "Regenerate the Xcode project from project.yml"
+private_lane :regenerate_project do
+  Dir.chdir(WORKSPACE_DIR) do
+    if `which xcodegen`.strip.empty?
+      UI.user_error!("xcodegen not found — install with `brew install xcodegen`")
+    end
+    sh("xcodegen generate")
+  end
+end
 
 platform :ios do
   before_all do
@@ -150,12 +169,7 @@ platform :ios do
   desc "Set CFBundleVersion to (latest TestFlight build + 1)"
   lane :bump do |options|
     api_key = load_api_key
-    latest = latest_testflight_build_number(
-      api_key: api_key,
-      app_identifier: APP_IDENTIFIER,
-      initial_build_number: 0
-    )
-    next_build = latest.to_i + 1
+    next_build = next_build_number(api_key)
     update_yaml_build_number(next_build)
     regenerate_project
     UI.success("Build number → #{next_build} (marketing #{marketing_version})") unless options[:silent]
@@ -180,16 +194,6 @@ platform :ios do
   # ---------------------------------------------------------------------------
   # Helpers
   # ---------------------------------------------------------------------------
-
-  desc "Regenerate the Xcode project from project.yml"
-  private_lane :regenerate_project do
-    Dir.chdir(WORKSPACE_DIR) do
-      if `which xcodegen`.strip.empty?
-        UI.user_error!("xcodegen not found — install with `brew install xcodegen`")
-      end
-      sh("xcodegen generate")
-    end
-  end
 
   private_lane :build_ipa do |options|
     build_app(
@@ -270,6 +274,20 @@ platform :ios do
     File.write(path, updated)
   end
 
+  # iOS and macOS builds of one record are numbered separately by App Store Connect, but
+  # project.yml has a single number, so take the highest of the two.
+  def next_build_number(api_key)
+    latest = %w[ios osx].map do |store_platform|
+      latest_testflight_build_number(
+        api_key: api_key,
+        app_identifier: APP_IDENTIFIER,
+        platform: store_platform,
+        initial_build_number: 0
+      ).to_i
+    end.max
+    latest + 1
+  end
+
   def testflight_changelog
     notes = File.join(__dir__, "metadata", "en-US", "release_notes.txt")
     File.exist?(notes) ? File.read(notes).strip : "Bug fixes and improvements."
@@ -303,6 +321,138 @@ platform :ios do
   end
 
   # ---------------------------------------------------------------------------
+
+  error do |lane, exception|
+    clean_build_artifacts
+  end
+end
+
+platform :mac do
+  before_all do
+    ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] ||= "120"
+  end
+
+  desc "Build the Mac app + upload it to TestFlight"
+  lane :beta do |options|
+    api_key = load_api_key
+    regenerate_project
+    bump(options.merge(silent: true))
+    setup_mac_signing(api_key: api_key)
+    build_pkg
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      app_platform: "osx",
+      pkg: lane_context[SharedValues::PKG_OUTPUT_PATH],
+      skip_waiting_for_build_processing: options.fetch(:wait, false) ? false : true,
+      distribute_external: false,
+      notify_external_testers: false,
+      changelog: testflight_changelog
+    )
+
+    clean_build_artifacts
+  end
+
+  desc "Build + upload the Mac binary and metadata; pass submit:true to submit for review"
+  lane :release do |options|
+    api_key = load_api_key
+    regenerate_project
+    bump(options.merge(silent: true))
+    setup_mac_signing(api_key: api_key)
+    build_pkg
+
+    deliver(
+      api_key: api_key,
+      app_identifier: APP_IDENTIFIER,
+      platform: "osx",
+      pkg: lane_context[SharedValues::PKG_OUTPUT_PATH],
+      screenshots_path: MAC_SCREENSHOTS,
+      skip_screenshots: !Dir.glob(File.join(MAC_SCREENSHOTS, "**", "*.png")).any?,
+      skip_metadata: false,
+      submit_for_review: options.fetch(:submit, false),
+      automatic_release: false,
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false
+      },
+      force: options.fetch(:force, false)
+    )
+
+    clean_build_artifacts
+  end
+
+  desc "Upload Mac screenshots only (drop PNGs in fastlane/mac_screenshots/<locale>/)"
+  lane :screenshots do
+    deliver(
+      api_key: load_api_key,
+      app_identifier: APP_IDENTIFIER,
+      platform: "osx",
+      screenshots_path: MAC_SCREENSHOTS,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: false,
+      overwrite_screenshots: true,
+      precheck_include_in_app_purchases: false,
+      force: true
+    )
+  end
+
+  desc "Build a signed Mac App Store .pkg locally (no upload)"
+  lane :build do
+    api_key = load_api_key(optional: true)
+    regenerate_project
+    setup_mac_signing(api_key: api_key)
+    build_pkg
+    UI.success("PKG: #{lane_context[SharedValues::PKG_OUTPUT_PATH]}")
+  end
+
+  desc "Set CFBundleVersion to (latest TestFlight build on iOS or macOS + 1)"
+  lane :bump do |options|
+    next_build = next_build_number(load_api_key)
+    update_yaml_build_number(next_build)
+    regenerate_project
+    UI.success("Build number → #{next_build} (marketing #{marketing_version})") unless options[:silent]
+  end
+
+  desc "Sync Mac App Store signing certificates & profiles (match)"
+  lane :register do
+    setup_mac_signing(api_key: load_api_key, readonly: false)
+  end
+
+  private_lane :build_pkg do
+    build_mac_app(
+      project: File.join(WORKSPACE_DIR, XCODEPROJ),
+      scheme: MAC_SCHEME,
+      configuration: "Release",
+      output_directory: OUTPUT_DIR,
+      output_name: "Swiftlet",
+      clean: true,
+      export_method: "app-store",
+      xcargs: match_configured? ? nil : "-allowProvisioningUpdates",
+      export_options: {
+        provisioningProfiles: match_configured? ? {
+          APP_IDENTIFIER => "match AppStore #{APP_IDENTIFIER} macos"
+        } : nil
+      }.compact
+    )
+  end
+
+  # The Mac App Store also needs a Mac Installer Distribution certificate to sign the .pkg.
+  private_lane :setup_mac_signing do |options|
+    next unless match_configured?
+
+    match(
+      type: "appstore",
+      platform: "macos",
+      additional_cert_types: ["mac_installer_distribution"],
+      app_identifier: APP_IDENTIFIER,
+      git_url: ENV["MATCH_GIT_URL"],
+      api_key: options[:api_key],
+      readonly: options.fetch(:readonly, ENV["CI"] ? true : false)
+    )
+  end
 
   error do |lane, exception|
     clean_build_artifacts
