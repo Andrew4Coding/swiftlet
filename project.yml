@@ -62,6 +62,21 @@ schemes:
     archive:
       config: Release
 
+  SwiftletMac:
+    build:
+      targets:
+        SwiftletMac: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
   SwiftletMenuBar:
     build:
       targets:
@@ -255,6 +270,65 @@ targets:
         SWIFT_APPROACHABLE_CONCURRENCY: YES
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_EMIT_LOC_STRINGS: YES
+
+  SwiftletMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: "SwiftletMac"
+      - path: "Shared"
+      - path: "Swiftlet/Assets.xcassets"
+      - path: "Swiftlet/AppIcon.icon"
+      - path: "Swiftlet/Localizable.xcstrings"
+    info:
+      path: "SwiftletMac/Info.plist"
+      properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.andrew4coding.swiftlet.Swiftlet
+            CFBundleURLSchemes:
+              - swiftlet
+    entitlements:
+      path: "SwiftletMac/SwiftletMac.entitlements"
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.developer.aps-environment: development
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.andrew4coding.swiftlet.Swiftlet
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.security.application-groups:
+          - group.com.andrew4coding.swiftlet.sharedData
+    settings:
+      base:
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+        COMBINE_HIDPI_IMAGES: YES
+        CURRENT_PROJECT_VERSION: 6
+        DEVELOPMENT_TEAM: "92QV2QPDKA"
+        ENABLE_HARDENED_RUNTIME: YES
+        ENABLE_PREVIEWS: YES
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "Swiftlet"
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.finance"
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+        MARKETING_VERSION: "1.0"
+        PRODUCT_BUNDLE_IDENTIFIER: com.andrew4coding.swiftlet.Swiftlet
+        PRODUCT_MODULE_NAME: SwiftletMac
+        PRODUCT_NAME: "Swiftlet"
+        SDKROOT: macosx
+        STRING_CATALOG_GENERATE_SYMBOLS: YES
+        SUPPORTED_PLATFORMS: "macosx"
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_EMIT_LOC_STRINGS: YES
+        SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY: YES
 
   SwiftletTests:
     type: bundle.unit-test
