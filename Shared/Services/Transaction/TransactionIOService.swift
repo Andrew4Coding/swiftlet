@@ -9,7 +9,7 @@ import SwiftData
 /// Serializes transactions to/from CSV or JSON, independent of CloudKit sync, so the user can
 /// back up or move data between accounts manually.
 enum TransactionIOService {
-    struct Record: Codable {
+    nonisolated struct Record: Codable, Equatable {
         var type: String
         var title: String
         var amount: String
@@ -21,7 +21,7 @@ enum TransactionIOService {
         var destinationWallet: String?
     }
 
-    private static let isoFormatter: ISO8601DateFormatter = {
+    nonisolated(unsafe) private static let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         return formatter
@@ -63,11 +63,13 @@ enum TransactionIOService {
     enum ImportError: LocalizedError {
         case unreadableFile
         case invalidFormat
+        case invalidCSV
 
         var errorDescription: String? {
             switch self {
             case .unreadableFile: "The file couldn't be read."
             case .invalidFormat: "This file isn't a valid Swiftlet JSON export."
+            case .invalidCSV: "This file isn't a valid Swiftlet CSV export."
             }
         }
     }
@@ -80,7 +82,16 @@ enum TransactionIOService {
         guard let records = try? decoder.decode([Record].self, from: data) else {
             throw ImportError.invalidFormat
         }
+        return try importRecords(records, into: context)
+    }
 
+    @MainActor
+    static func importCSV(_ data: Data, into context: ModelContext) throws -> ImportResult {
+        try importRecords(decodeCSV(data), into: context)
+    }
+
+    @MainActor
+    private static func importRecords(_ records: [Record], into context: ModelContext) throws -> ImportResult {
         let existing = (try? context.fetch(FetchDescriptor<Transaction>())) ?? []
         var imported = 0
         var skipped = 0
@@ -181,6 +192,95 @@ enum TransactionIOService {
             lines.append(fields.map { escapeCSVField($0) }.joined(separator: ","))
         }
         return lines.joined(separator: "\n").data(using: .utf8) ?? Data()
+    }
+
+    nonisolated static func decodeCSV(_ data: Data) throws -> [Record] {
+        guard let text = String(data: data, encoding: .utf8) else { throw ImportError.unreadableFile }
+        let rows = parseCSVRows(text).filter { !($0.count == 1 && $0[0].isEmpty) }
+        guard let header = rows.first?.map({ $0.trimmingCharacters(in: .whitespaces) }) else {
+            throw ImportError.invalidCSV
+        }
+        let index = Dictionary(header.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        guard let typeColumn = index["type"], let titleColumn = index["title"],
+              let amountColumn = index["amount"], let dateColumn = index["date"]
+        else { throw ImportError.invalidCSV }
+
+        func field(_ row: [String], _ column: Int?) -> String {
+            guard let column, column < row.count else { return "" }
+            return row[column]
+        }
+
+        return rows.dropFirst().compactMap { row in
+            guard let date = isoFormatter.date(from: field(row, dateColumn)) else { return nil }
+            func optional(_ name: String) -> String? {
+                let value = field(row, index[name])
+                return value.isEmpty ? nil : value
+            }
+            return Record(
+                type: field(row, typeColumn),
+                title: field(row, titleColumn),
+                amount: field(row, amountColumn),
+                source: field(row, index["source"]),
+                date: date,
+                description: field(row, index["description"]),
+                category: optional("category"),
+                wallet: optional("wallet"),
+                destinationWallet: optional("destinationWallet")
+            )
+        }
+    }
+
+    nonisolated static func parseCSVRows(_ text: String) -> [[String]] {
+        var rows: [[String]] = []
+        var row: [String] = []
+        var field = ""
+        var inQuotes = false
+        var iterator = Array(text.unicodeScalars).makeIterator()
+        var pending: Unicode.Scalar? = iterator.next()
+
+        while let scalar = pending {
+            pending = iterator.next()
+            if inQuotes {
+                if scalar == "\"" {
+                    if pending == "\"" {
+                        field.unicodeScalars.append("\"")
+                        pending = iterator.next()
+                    } else {
+                        inQuotes = false
+                    }
+                } else {
+                    field.unicodeScalars.append(scalar)
+                }
+                continue
+            }
+            switch scalar {
+            case "\"":
+                inQuotes = true
+            case ",":
+                row.append(field)
+                field = ""
+            case "\r":
+                if pending == "\n" {
+                    pending = iterator.next()
+                }
+                row.append(field)
+                rows.append(row)
+                row = []
+                field = ""
+            case "\n":
+                row.append(field)
+                rows.append(row)
+                row = []
+                field = ""
+            default:
+                field.unicodeScalars.append(scalar)
+            }
+        }
+        if !field.isEmpty || !row.isEmpty {
+            row.append(field)
+            rows.append(row)
+        }
+        return rows
     }
 
     private static func escapeCSVField(_ field: String) -> String {
