@@ -6,7 +6,7 @@
 import Foundation
 
 /// Period presets shared by Home's summary and the Transactions filter bar.
-enum PeriodOption: String, CaseIterable, Identifiable {
+nonisolated enum PeriodOption: String, CaseIterable, Identifiable {
     case today
     case thisWeek
     case thisMonth
@@ -29,7 +29,7 @@ enum PeriodOption: String, CaseIterable, Identifiable {
 }
 
 /// Granularity used to bucket transactions for the bar chart.
-enum StatsPeriod: String, CaseIterable, Identifiable {
+nonisolated enum StatsPeriod: String, CaseIterable, Identifiable {
     case day
     case week
     case month
@@ -49,7 +49,7 @@ enum StatsPeriod: String, CaseIterable, Identifiable {
     }
 }
 
-enum DateRangeProvider {
+nonisolated enum DateRangeProvider {
     /// Resolves a `PeriodOption` to a concrete date range, `nil` meaning "no bound" (used by `.all`).
     static func range(for option: PeriodOption, customRange: ClosedRange<Date>?, calendar: Calendar = .current) -> ClosedRange<Date>? {
         let now = Date.now
