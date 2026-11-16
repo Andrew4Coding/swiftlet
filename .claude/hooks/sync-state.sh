@@ -9,7 +9,7 @@ cd "$root"
 
 state_file=".claude/sync-state"
 paths=()
-for path in Swiftlet SwiftletWidgets SwiftletShareExtension SwiftletMenuBar project.yml fastlane/Fastfile; do
+for path in Swiftlet Shared SwiftletMac SwiftletWidgets SwiftletShareExtension project.yml fastlane/Fastfile; do
   [[ -e "$path" ]] && paths+=("$path")
 done
 
